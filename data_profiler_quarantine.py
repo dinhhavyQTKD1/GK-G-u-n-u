@@ -18,12 +18,13 @@ import csv
 import json
 import sqlite3
 from datetime import datetime
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any, Tuple, Optional
 
 
-QUARANTINE_CSV_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "data", "data_quarantine_export.csv"
+_BASE_DATA_DIR = "/tmp/beardata" if os.environ.get("VERCEL") else os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "data"
 )
+QUARANTINE_CSV_PATH = os.path.join(_BASE_DATA_DIR, "data_quarantine_export.csv")
 
 
 def run_sandbox_profiling_and_quarantine(

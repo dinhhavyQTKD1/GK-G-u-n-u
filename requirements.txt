@@ -1,4 +1,2 @@
-streamlit>=1.32.0
-pandas>=2.1.0
-plotly>=5.19.0
-openpyxl>=3.1.2
+# Zero external dependencies required for Vercel Python WSGI runtime.
+# Local Streamlit UI dependencies are in requirements-streamlit.txt.

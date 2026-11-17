@@ -14,7 +14,8 @@ import sqlite3
 import random
 from datetime import datetime, timedelta
 
-DB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+_DEFAULT_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+DB_DIR = "/tmp/beardata" if os.environ.get("VERCEL") else _DEFAULT_DATA_DIR
 DB_PATH = os.path.join(DB_DIR, "enterprise_dw.db")
 SAMPLE_CSV_PATH = os.path.join(DB_DIR, "sample_orders_yesterday.csv")
 
