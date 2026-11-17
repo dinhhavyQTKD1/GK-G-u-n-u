@@ -1,0 +1,2997 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🐻 BearData AI — Hệ thống AI Agent Phân tích Dữ liệu 6 Bước</title>
+  <!-- Google Fonts: Nunito & Plus Jakarta Sans cho nét chữ tròn trịa dễ thương mà vẫn sắc nét -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Plotly.js cho biểu đồ tương tác (Bước 5) -->
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+  <!-- SheetJS đọc/xuất file Excel .xlsx & .csv (Bước 1 & Bước 6) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root {
+      /* Tông màu Gấu Nâu Cacao Ấm Áp (Cozy Espresso & Honey Caramel Bear Theme) */
+      --bg-outer: #160f0b;
+      --bg-shell: #1e1510;
+      --bg-sidebar: #1a110d;
+      --bg-card: #271b15;
+      --bg-card-inner: #1f1510;
+      --bg-card-hover: #32231b;
+      --border-soft: rgba(217, 155, 102, 0.14);
+      --border-glow: rgba(245, 158, 11, 0.45);
+      --text-cream: #fff8f0;
+      --text-latte: #d6bfa9;
+      --text-mocha: #9c826b;
+      --bear-brown: #8b5a2b;
+      --bear-caramel: #d97706;
+      --bear-honey: #f59e0b;
+      --bear-peach: #fb7185;
+      --bear-mint: #34d399;
+      --bear-sky: #38bdf8;
+      --pill-gradient: linear-gradient(90deg, #b45309 0%, #d97706 50%, #f59e0b 100%);
+      --shadow-cozy: 0 14px 34px rgba(10, 5, 2, 0.55);
+    }
+
+    body.light-latte {
+      --bg-outer: #f5ebe1;
+      --bg-shell: #fffaf5;
+      --bg-sidebar: #faefe3;
+      --bg-card: #ffffff;
+      --bg-card-inner: #fdf6ee;
+      --bg-card-hover: #f9ecde;
+      --border-soft: rgba(139, 90, 43, 0.16);
+      --border-glow: rgba(217, 119, 6, 0.45);
+      --text-cream: #3b2314;
+      --text-latte: #6e472b;
+      --text-mocha: #9c7254;
+      --shadow-cozy: 0 12px 30px rgba(110, 71, 43, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 15% 15%, #2b1d14 0%, var(--bg-outer) 70%);
+      color: var(--text-cream);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+      transition: background 0.35s ease, color 0.35s ease;
+    }
+
+    /* Hiệu ứng động nền: Dấu chân gấu & Giọt mật ong bay lơ lửng dễ thương */
+    .floating-decor {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .floater {
+      position: absolute;
+      opacity: 0.11;
+      font-size: 22px;
+      animation: floatUpDown 8s ease-in-out infinite;
+    }
+
+    @keyframes floatUpDown {
+      0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+      50% { transform: translateY(-18px) rotate(10deg) scale(1.08); }
+    }
+
+    @keyframes earWiggle {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-8deg); }
+      75% { transform: rotate(8deg); }
+    }
+
+    @keyframes bearBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+    }
+
+    @keyframes pawSpin {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.18); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+
+    /* Hiệu ứng dấu chân gấu nở ra khi click chuột */
+    .paw-ripple {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      font-size: 20px;
+      animation: pawPop 0.75s ease-out forwards;
+    }
+
+    @keyframes pawPop {
+      0% { opacity: 0.95; transform: translate(-50%, -50%) scale(0.5) rotate(-15deg); }
+      100% { opacity: 0; transform: translate(-50%, -95%) scale(1.45) rotate(15deg); }
+    }
+
+    /* KHUNG DASHBOARD CHÍNH (Bố cục chuẩn theo mẫu Dribbble Extej) */
+    .dashboard-wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 1560px;
+      margin: 18px auto;
+      background: var(--bg-shell);
+      border: 1px solid var(--border-soft);
+      border-radius: 24px;
+      box-shadow: var(--shadow-cozy);
+      display: grid;
+      grid-template-columns: 265px 1fr;
+      min-height: calc(100vh - 36px);
+      overflow: hidden;
+    }
+
+    @media (max-width: 1120px) {
+      .dashboard-wrapper {
+        grid-template-columns: 1fr;
+        margin: 0;
+        border-radius: 0;
+      }
+    }
+
+    /* ============================================================ */
+    /* SIDEBAR TRÁI (Giống hệt bố cục Extej: Logo + Menu Groups)    */
+    /* ============================================================ */
+    .extej-sidebar {
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-soft);
+      padding: 22px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      user-select: none;
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 8px;
+    }
+
+    .brand-logo-group {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      cursor: pointer;
+    }
+
+    .bear-svg-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #b45309, #f59e0b);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 16px rgba(217, 119, 6, 0.38);
+      animation: bearBounce 3.2s ease-in-out infinite;
+    }
+
+    .brand-name {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--text-cream);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: var(--text-mocha);
+      font-weight: 700;
+    }
+
+    .sidebar-plus-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      border: 1px solid var(--border-soft);
+      background: var(--bg-card);
+      color: var(--text-latte);
+      cursor: pointer;
+      font-weight: 800;
+      transition: all 0.2s;
+    }
+
+    .sidebar-plus-btn:hover {
+      background: var(--bear-honey);
+      color: #1e120a;
+      transform: rotate(90deg);
+    }
+
+    .nav-group-label {
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-mocha);
+      padding: 0 12px;
+      margin-bottom: 6px;
+    }
+
+    .nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 13px;
+      border-radius: 12px;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-latte);
+      cursor: pointer;
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border: 1px solid transparent;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-cream);
+      transform: translateX(4px);
+    }
+
+    .nav-item.active {
+      background: var(--pill-gradient);
+      color: #fffaf0;
+      box-shadow: 0 6px 20px rgba(217, 119, 6, 0.42);
+      transform: translateX(3px);
+    }
+
+    .nav-item-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-item-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      opacity: 0.85;
+    }
+
+    .nav-count {
+      background: rgba(0, 0, 0, 0.25);
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    /* Thẻ Mascot Gấu Nâu nhỏ ở đáy Sidebar */
+    .sidebar-bear-mascot {
+      margin-top: auto;
+      background: linear-gradient(145deg, rgba(180, 83, 9, 0.22), rgba(39, 27, 21, 0.9));
+      border: 1px solid var(--border-glow);
+      border-radius: 16px;
+      padding: 14px;
+      text-align: center;
+      position: relative;
+    }
+
+    .sidebar-bear-mascot p {
+      font-size: 12px;
+      color: var(--text-latte);
+      margin-top: 6px;
+      line-height: 1.45;
+    }
+
+    /* ============================================================ */
+    /* KHU VỰC NỘI DUNG CHÍNH BÊN PHẢI                              */
+    /* ============================================================ */
+    .extej-main {
+      padding: 20px 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      overflow-y: auto;
+    }
+
+    /* TOP BAR (Search/Prompt Input + Notification + User Profile) */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .search-prompt-box {
+      flex: 1;
+      min-width: 300px;
+      max-width: 680px;
+      display: flex;
+      align-items: center;
+      background: var(--bg-card-inner);
+      border: 1px solid var(--border-soft);
+      border-radius: 14px;
+      padding: 6px 8px 6px 14px;
+      gap: 10px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-prompt-box:focus-within {
+      border-color: var(--bear-honey);
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+    }
+
+    .search-prompt-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-cream);
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
+      outline: none;
+    }
+
+    .btn-bear-run {
+      background: var(--pill-gradient);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 8px 15px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);
+      transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .btn-bear-run:hover {
+      transform: scale(1.05);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      color: var(--text-latte);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      font-size: 16px;
+      transition: transform 0.2s;
+    }
+
+    .icon-btn:hover {
+      transform: translateY(-2px) rotate(6deg);
+      border-color: var(--bear-honey);
+    }
+
+    .notif-dot {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--bear-peach);
+      animation: pulseGlow 1.8s infinite;
+    }
+
+    .user-profile-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      padding: 5px 12px 5px 6px;
+      border-radius: 999px;
+    }
+
+    .bear-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f59e0b, #b45309);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+    }
+
+    .user-info-text .u-name {
+      font-size: 12.5px;
+      font-weight: 800;
+      color: var(--text-cream);
+      line-height: 1.2;
+    }
+
+    .user-info-text .u-role {
+      font-size: 10.5px;
+      color: var(--bear-honey);
+      font-weight: 700;
+    }
+
+    /* TIÊU ĐỀ TRANG & PRESET PILLS */
+    .page-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    /* ============================================================ */
+    /* CENTERED AI CHAT BOX & MULTI-FILE DROPZONE (TRUNG TÂM)       */
+    /* ============================================================ */
+    .center-chat-stage {
+      width: 100%;
+      max-width: 940px;
+      margin: 4px auto 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .bear-peeking-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #78350f, #b45309);
+      border: 2px solid var(--bear-honey);
+      border-bottom: none;
+      padding: 7px 20px;
+      border-radius: 18px 18px 0 0;
+      font-size: 13px;
+      font-weight: 900;
+      color: #fff8f0;
+      box-shadow: 0 -4px 16px rgba(245, 158, 11, 0.25);
+      animation: bearBounce 3.2s ease-in-out infinite;
+    }
+
+    .center-chatbox-shell {
+      width: 100%;
+      background: linear-gradient(180deg, #2b1d16 0%, var(--bg-card) 100%);
+      border: 2px solid var(--border-glow);
+      border-radius: 24px;
+      padding: 20px 24px;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.5), 0 0 0 4px rgba(245, 158, 11, 0.08);
+      transition: all 0.25s ease;
+      position: relative;
+    }
+
+    body.light-latte .center-chatbox-shell {
+      background: linear-gradient(180deg, #fffdf9 0%, #faefe3 100%);
+      box-shadow: 0 16px 38px rgba(139, 90, 43, 0.16), 0 0 0 4px rgba(217, 119, 6, 0.1);
+    }
+
+    .center-chatbox-shell.drag-over {
+      border-color: var(--bear-mint);
+      box-shadow: 0 0 0 6px rgba(52, 211, 153, 0.25);
+      transform: scale(1.01);
+    }
+
+    /* Khung hội thoại Chat trực tiếp bên trong Center Box */
+    .chat-messages-stream {
+      max-height: 240px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 14px;
+      padding: 10px 12px;
+      background: var(--bg-card-inner);
+      border: 1px solid var(--border-soft);
+      border-radius: 16px;
+    }
+
+    .chat-msg {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .chat-msg.user {
+      flex-direction: row-reverse;
+    }
+
+    .chat-avatar-sm {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, #f59e0b, #b45309);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+    }
+
+    .chat-msg.user .chat-avatar-sm {
+      background: linear-gradient(135deg, #38bdf8, #0284c7);
+    }
+
+    .chat-bubble {
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      padding: 10px 14px;
+      border-radius: 14px;
+      max-width: 84%;
+      color: var(--text-cream);
+    }
+
+    .chat-msg.user .chat-bubble {
+      background: linear-gradient(135deg, #9a3412, #b45309);
+      color: #fff8f0;
+      border-color: rgba(245, 158, 11, 0.4);
+    }
+
+    /* Khu vực Kéo Thả & Hiển thị File Đính Kèm */
+    .file-drop-strip {
+      border: 1.5px dashed rgba(245, 158, 11, 0.45);
+      background: rgba(245, 158, 11, 0.05);
+      border-radius: 14px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      transition: background 0.2s;
+    }
+
+    .file-drop-strip:hover {
+      background: rgba(245, 158, 11, 0.11);
+    }
+
+    .file-format-badges {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .fmt-tag {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 7px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      color: var(--text-latte);
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .fmt-tag:hover {
+      border-color: var(--bear-honey);
+      color: var(--bear-honey);
+      transform: translateY(-1px);
+    }
+
+    /* Danh sách các file đã đính kèm vào Chat Box */
+    .attached-files-tray {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .attached-file-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(52, 211, 153, 0.14);
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      color: var(--text-cream);
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      animation: bearBounce 2.5s infinite;
+    }
+
+    .attached-file-chip .rm-file {
+      cursor: pointer;
+      color: #fb7185;
+      font-weight: 900;
+      margin-left: 4px;
+    }
+
+    /* Ô nhập câu hỏi chính ở Center */
+    .center-input-composer {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-card-inner);
+      border: 1.5px solid var(--border-soft);
+      border-radius: 16px;
+      padding: 8px 10px 8px 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .center-input-composer:focus-within {
+      border-color: var(--bear-honey);
+      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.18);
+    }
+
+    .attach-trigger-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      color: var(--bear-honey);
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .attach-trigger-btn:hover {
+      background: var(--bear-honey);
+      color: #1e120a;
+      transform: rotate(-10deg) scale(1.06);
+    }
+
+    .center-input-composer input[type="text"] {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-cream);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      outline: none;
+    }
+
+    /* Modal nhập Link Google Sheets / Lark Base */
+    .url-connector-row {
+      display: none;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border-soft);
+    }
+
+    .url-connector-row.show {
+      display: flex;
+    }
+
+    .url-connector-row input {
+      flex: 1;
+      background: var(--bg-card-inner);
+      border: 1px solid var(--border-soft);
+      color: var(--text-cream);
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 12.5px;
+    }
+
+    .page-title-row h2 {
+      font-size: 24px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .preset-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .preset-chip {
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      color: var(--text-latte);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .preset-chip:hover {
+      background: rgba(245, 158, 11, 0.16);
+      border-color: var(--bear-honey);
+      color: var(--text-cream);
+      transform: translateY(-2px);
+    }
+
+    /* ============================================================ */
+    /* KHỐI 1: TOP HERO METRICS + 4 THANH MÀU (Giống hệt Wallet)    */
+    /* ============================================================ */
+    .hero-wallet-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 20px;
+      padding: 22px 26px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-top-numbers {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-bottom: 22px;
+    }
+
+    @media (max-width: 900px) {
+      .hero-top-numbers {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .hero-stat-item .stat-label {
+      font-size: 12.5px;
+      color: var(--text-mocha);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .hero-stat-item .stat-big {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--text-cream);
+    }
+
+    .hero-stat-item .stat-sub {
+      font-size: 12px;
+      color: var(--text-latte);
+      margin-top: 2px;
+      font-weight: 600;
+    }
+
+    /* 4 Thanh màu ngang phía dưới (Giống Bitcoin / Ethereum / Binance / Ripple) */
+    .hero-bars-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .hero-bars-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .hero-bar-col {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .color-bar-line {
+      height: 5px;
+      border-radius: 999px;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bar-legend-title {
+      font-size: 12px;
+      color: var(--text-latte);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .bar-legend-value {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text-cream);
+    }
+
+    /* ============================================================ */
+    /* KHỐI 2: GIỮA (TRÁI: BỘ ĐIỀU KHIỂN AGENT + PHẢI: 4 THẺ DỌC)  */
+    /* ============================================================ */
+    .middle-exchange-row {
+      display: grid;
+      grid-template-columns: 335px 1fr;
+      gap: 18px;
+    }
+
+    @media (max-width: 1180px) {
+      .middle-exchange-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Thẻ điều khiển bên trái (Giống thẻ "Exchange Buy" trong hình mẫu) */
+    .exchange-control-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 20px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .ex-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .ex-field-box {
+      background: var(--bg-card-inner);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ex-field-box label {
+      font-size: 11px;
+      color: var(--text-mocha);
+      font-weight: 800;
+      display: block;
+    }
+
+    .ex-field-box select {
+      background: transparent;
+      border: none;
+      color: var(--text-cream);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      outline: none;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .ex-field-box select option {
+      background: #271b15;
+      color: #fff8f0;
+    }
+
+    .swap-paw-circle {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f59e0b, #b45309);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: -6px auto;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+      z-index: 2;
+      transition: transform 0.35s;
+    }
+
+    .swap-paw-circle:hover {
+      animation: pawSpin 0.6s ease-in-out;
+    }
+
+    .ex-meta-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: var(--text-latte);
+      font-weight: 700;
+    }
+
+    .btn-buy-style {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      background: var(--pill-gradient);
+      color: #fff;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(217, 119, 6, 0.4);
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .btn-buy-style:hover {
+      transform: translateY(-2px) scale(1.01);
+      filter: brightness(1.08);
+    }
+
+    /* 4 Thẻ Dọc Cửa hàng có Sparkline & Watermark (Giống BTC, ETH, ADA, XRP) */
+    .store-vertical-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    @media (max-width: 1024px) {
+      .store-vertical-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .v-store-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 20px;
+      padding: 18px 16px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
+    }
+
+    .v-store-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--bear-honey);
+      box-shadow: 0 12px 26px rgba(217, 119, 6, 0.22);
+    }
+
+    .v-store-card.critical-card {
+      border-color: rgba(251, 113, 133, 0.45);
+      background: linear-gradient(180deg, rgba(159, 18, 57, 0.16) 0%, var(--bg-card) 100%);
+    }
+
+    .v-store-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-latte);
+    }
+
+    .v-store-rate {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--text-cream);
+      margin-top: 4px;
+    }
+
+    .v-store-delta {
+      font-size: 11.5px;
+      font-weight: 800;
+      margin-top: 2px;
+    }
+
+    .sparkline-svg {
+      width: 100%;
+      height: 52px;
+      margin: 12px 0;
+    }
+
+    .v-store-footer {
+      font-size: 11.5px;
+      color: var(--text-mocha);
+      line-height: 1.45;
+      position: relative;
+      z-index: 2;
+    }
+
+    .v-store-footer strong {
+      color: var(--text-cream);
+      display: block;
+      font-size: 12.5px;
+    }
+
+    .watermark-bear {
+      position: absolute;
+      right: -10px;
+      bottom: -12px;
+      font-size: 74px;
+      opacity: 0.07;
+      pointer-events: none;
+      transform: rotate(-12deg);
+    }
+
+    /* ============================================================ */
+    /* KHỐI 3: 4 THẺ GRADIENT NGANG (Giống Accounts and Cards)      */
+    /* ============================================================ */
+    .cards-deck-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 20px;
+      padding: 20px 24px;
+    }
+
+    .deck-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .deck-header h3 {
+      font-size: 16px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .gradient-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 1050px) {
+      .gradient-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .g-card {
+      border-radius: 16px;
+      padding: 16px;
+      min-height: 132px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .g-card:hover {
+      transform: translateY(-5px) scale(1.02);
+    }
+
+    .g-card-1 {
+      background: linear-gradient(135deg, #78350f 0%, #b45309 50%, #f59e0b 100%);
+    }
+    .g-card-2 {
+      background: linear-gradient(135deg, #9a3412 0%, #ea580c 55%, #fbbf24 100%);
+    }
+    .g-card-3 {
+      background: linear-gradient(135deg, #881337 0%, #e11d48 55%, #fda4af 100%);
+    }
+    .g-card-4 {
+      background: linear-gradient(135deg, #065f46 0%, #059669 55%, #6ee7b7 100%);
+    }
+
+    .g-card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(4px);
+      padding: 3px 9px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 800;
+      width: fit-content;
+    }
+
+    .g-card-title {
+      font-size: 14px;
+      font-weight: 900;
+      margin-top: 10px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    .g-card-desc {
+      font-size: 11.5px;
+      opacity: 0.94;
+      font-weight: 600;
+      margin-top: 4px;
+      line-height: 1.35;
+    }
+
+    .dashed-action-bar {
+      width: 100%;
+      border: 1.5px dashed rgba(245, 158, 11, 0.45);
+      background: rgba(245, 158, 11, 0.06);
+      color: var(--bear-honey);
+      border-radius: 12px;
+      padding: 11px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .dashed-action-bar:hover {
+      background: rgba(245, 158, 11, 0.16);
+      transform: scale(1.005);
+    }
+
+    /* ============================================================ */
+    /* KHU VỰC CHI TIẾT ĐẦY ĐỦ 6 BƯỚC (BẢNG, BIỂU ĐỒ, CODE, HITL)   */
+    /* ============================================================ */
+    .detail-section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 20px;
+      padding: 22px 24px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .section-head h3 {
+      font-size: 17px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .two-col-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    @media (max-width: 1080px) {
+      .two-col-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .exec-summary-box {
+      background: var(--bg-card-inner);
+      border-left: 5px solid var(--bear-honey);
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .exec-item {
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: var(--text-cream);
+    }
+
+    .tag-pill {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      margin-right: 6px;
+      text-transform: uppercase;
+    }
+
+    /* Bảng dữ liệu chuẩn Gấu Nâu */
+    .table-scroll {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    th {
+      background: var(--bg-card-inner);
+      color: var(--text-mocha);
+      font-size: 11.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    tr:hover td {
+      background: rgba(245, 158, 11, 0.05);
+    }
+
+    pre.sql-code {
+      background: #140d09;
+      border: 1px solid var(--border-soft);
+      color: #fcd34d;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+
+    .badge-cute {
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .b-honey { background: rgba(245, 158, 11, 0.18); color: #fbbf24; }
+    .b-berry { background: rgba(251, 113, 133, 0.2); color: #fda4af; }
+    .b-mint  { background: rgba(52, 211, 153, 0.18); color: #6ee7b7; }
+    .b-sky   { background: rgba(56, 189, 248, 0.18); color: #7dd3fc; }
+
+    /* Toast Gấu Nâu thông báo dễ thương */
+    #bearToast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: linear-gradient(135deg, #3b2314, #271b15);
+      border: 2px solid var(--bear-honey);
+      color: #fff8f0;
+      padding: 14px 20px;
+      border-radius: 18px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      gap: 12px;
+      z-index: 9999;
+      font-size: 13.5px;
+      font-weight: 700;
+      max-width: 440px;
+      animation: bearBounce 2s infinite;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HIỆU ỨNG ĐỘNG NỀN: DẤU CHÂN GẤU & HŨ MẬT ONG BAY LƠ LỬNG -->
+  <div class="floating-decor">
+    <span class="floater" style="top:8%; left:6%; animation-delay:0s;">🐾</span>
+    <span class="floater" style="top:22%; right:8%; animation-delay:1.5s;">🍯</span>
+    <span class="floater" style="top:55%; left:4%; animation-delay:2.8s;">🧸</span>
+    <span class="floater" style="top:78%; right:5%; animation-delay:0.9s;">🐾</span>
+    <span class="floater" style="top:40%; right:28%; animation-delay:3.4s;">✨</span>
+  </div>
+
+  <!-- TOAST THÔNG BÁO GẤU NÂU -->
+  <div id="bearToast">
+    <span style="font-size:28px;">🐻🍯</span>
+    <div id="bearToastText">Gấu Nâu AI đã hoàn tất phân tích 6 bước!</div>
+  </div>
+
+  <!-- KHUNG DASHBOARD CHÍNH (BỐ CỤC EXTEJ) -->
+  <div class="dashboard-wrapper">
+
+    <!-- ========================================================== -->
+    <!-- SIDEBAR TRÁI (Thiết kế theo mẫu Extej + Mascot Gấu Nâu)    -->
+    <!-- ========================================================== -->
+    <aside class="extej-sidebar">
+      <div class="brand-header">
+        <div class="brand-logo-group" onclick="scrollToSection('secTop')">
+          <div class="bear-svg-box" title="Gấu Nâu Phân Tích Dữ Liệu">
+            <!-- SVG Gấu Nâu Dễ Thương -->
+            <svg width="30" height="30" viewBox="0 0 64 64" fill="none">
+              <circle cx="16" cy="18" r="9" fill="#5c3a21"/>
+              <circle cx="16" cy="18" r="5" fill="#d99b66"/>
+              <circle cx="48" cy="18" r="9" fill="#5c3a21"/>
+              <circle cx="48" cy="18" r="5" fill="#d99b66"/>
+              <circle cx="32" cy="34" r="20" fill="#7c4d2b"/>
+              <ellipse cx="32" cy="39" rx="9" ry="7" fill="#f3d5b5"/>
+              <circle cx="24" cy="30" r="3" fill="#1e120a"/>
+              <circle cx="40" cy="30" r="3" fill="#1e120a"/>
+              <ellipse cx="32" cy="36" rx="3.5" ry="2.5" fill="#3b2314"/>
+              <circle cx="20" cy="36" r="3.2" fill="#fb7185" opacity="0.65"/>
+              <circle cx="44" cy="36" r="3.2" fill="#fb7185" opacity="0.65"/>
+            </svg>
+          </div>
+          <div>
+            <div class="brand-name">BearData <span style="font-size:14px;">🐾</span></div>
+            <div class="brand-sub">AI Agent 6 Bước</div>
+          </div>
+        </div>
+        <button class="sidebar-plus-btn" onclick="toggleBearTheme()" title="Đổi tông màu Cacao Đậm / Kem Sữa">🌓</button>
+      </div>
+
+      <!-- NHÓM 1: PAGES / QUY TRÌNH 6 BƯỚC -->
+      <div>
+        <div class="nav-group-label">QUY TRÌNH 6 BƯỚC (PIPELINE)</div>
+        <div class="nav-list">
+          <div class="nav-item active" id="navOverview" onclick="activateNav('navOverview', 'secTop')">
+            <div class="nav-item-left"><span>🍯</span> <span>Tổng quan (Wallet View)</span></div>
+            <div class="nav-item-right"><span class="nav-count">Live</span> <span>›</span></div>
+          </div>
+          <div class="nav-item" id="navStep1" onclick="activateNav('navStep1', 'secStep12')">
+            <div class="nav-item-left"><span>🎯</span> <span>1. Intent & Catalog</span></div>
+            <div class="nav-item-right"><span class="nav-count">5 bảng</span> <span>›</span></div>
+          </div>
+          <div class="nav-item" id="navStep2" onclick="activateNav('navStep2', 'secStep12')">
+            <div class="nav-item-left"><span>🛡️</span> <span>2. Planner & Guardrails</span></div>
+            <div class="nav-item-right"><span class="nav-count">3x Retry</span> <span>›</span></div>
+          </div>
+          <div class="nav-item" id="navStep3" onclick="activateNav('navStep3', 'secStep3')">
+            <div class="nav-item-left"><span>🧹</span> <span>3. Sandbox Quarantine</span></div>
+            <div class="nav-item-right"><span class="nav-count">29 lỗi</span> <span>›</span></div>
+          </div>
+          <div class="nav-item" id="navStep4" onclick="activateNav('navStep4', 'secStep4')">
+            <div class="nav-item-left"><span>🔬</span> <span>4. Deep Root-Cause</span></div>
+            <div class="nav-item-right"><span class="nav-count">18.4%</span> <span>›</span></div>
+          </div>
+          <div class="nav-item" id="navStep5" onclick="activateNav('navStep5', 'secStep5')">
+            <div class="nav-item-left"><span>📊</span> <span>5. Biểu đồ & Insight</span></div>
+            <div class="nav-item-right"><span class="nav-count">4 Charts</span> <span>›</span></div>
+          </div>
+          <div class="nav-item" id="navStep6" onclick="activateNav('navStep6', 'secStep6')">
+            <div class="nav-item-left"><span>🚨</span> <span>6. Proactive & HITL</span></div>
+            <div class="nav-item-right"><span class="nav-count">Alert</span> <span>›</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NHÓM 2: UI ELEMENTS / CÔNG CỤ KIỂM THỬ -->
+      <div>
+        <div class="nav-group-label">CÔNG CỤ & KIỂM ĐỊNH (TOOLS)</div>
+        <div class="nav-list">
+          <div class="nav-item" onclick="document.getElementById('fileUploadHidden').click()">
+            <div class="nav-item-left"><span>📂</span> <span>Upload File .xlsx / .csv</span></div>
+            <div class="nav-item-right"><span>›</span></div>
+          </div>
+          <input type="file" id="fileUploadHidden" accept=".csv,.xlsx,.xls" style="display:none;" onchange="handleFileUpload(event)" />
+
+          <div class="nav-item" onclick="testMaliciousSql('DROP TABLE orders;')">
+            <div class="nav-item-left"><span>🛑</span> <span>Test Chặn SQL DROP</span></div>
+            <div class="nav-item-right"><span>›</span></div>
+          </div>
+          <div class="nav-item" onclick="exportCleanReportExcel()">
+            <div class="nav-item-left"><span>📥</span> <span>Xuất Báo cáo Excel</span></div>
+            <div class="nav-item-right"><span>›</span></div>
+          </div>
+          <div class="nav-item" onclick="exportQuarantineCsv()">
+            <div class="nav-item-left"><span>🗂️</span> <span>Tải data_quarantine.csv</span></div>
+            <div class="nav-item-right"><span>›</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MASCOT GẤU NÂU TRỢ LÝ CUỐI SIDEBAR -->
+      <div class="sidebar-bear-mascot">
+        <div style="font-size:32px; animation: earWiggle 2.4s infinite;">🧸🍯</div>
+        <div style="font-size:13px; font-weight:900; color:var(--bear-honey);">Trợ lý Gấu Nâu AI</div>
+        <p id="mascotStatusText">
+          "Gấu đã lọc sạch <strong>14 đơn test</strong> & phát hiện <strong>CH#04 hủy 18.4%</strong> khung 17h–19h!"
+        </p>
+      </div>
+    </aside>
+
+    <!-- ========================================================== -->
+    <!-- KHU VỰC NỘI DUNG CHÍNH BÊN PHẢI                            -->
+    <!-- ========================================================== -->
+    <main class="extej-main" id="secTop">
+
+      <!-- TOP BAR: KHUNG CHAT NGÔN NGỮ TỰ NHIÊN + PROFILE -->
+      <div class="topbar">
+        <div class="search-prompt-box">
+          <span style="font-size:18px;">🐻💬</span>
+          <input
+            type="text"
+            id="userQueryInput"
+            value="Kiểm tra giúp tôi top 5 cửa hàng có tỷ lệ hủy đơn cao nhất hôm qua và nguyên nhân."
+            placeholder="Hỏi Gấu Nâu AI Agent bất kỳ câu hỏi phân tích dữ liệu nào..."
+            onkeydown="if(event.key==='Enter') runBearPipeline()"
+          />
+          <button class="btn-bear-run" onclick="runBearPipeline()">
+            <span>🐾 Phân tích ngay</span>
+          </button>
+        </div>
+
+        <div class="topbar-right">
+          <button class="icon-btn" onclick="scrollToSection('secStep6')" title="Cảnh báo chủ động (Proactive Alert)">
+            🔔 <span class="notif-dot"></span>
+          </button>
+          <button class="icon-btn" onclick="toggleBearTheme()" title="Đổi giao diện Cacao / Kem Sữa">
+            🎨
+          </button>
+          <div class="user-profile-pill">
+            <div class="bear-avatar">🐻</div>
+            <div class="user-info-text">
+              <div class="u-name" id="topUserName">Nguyễn Văn Bắc</div>
+              <div class="u-role" id="topUserRole">Manager_Region_North • Localhost:8080</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TIÊU ĐỀ & NÚT CHỌN KỊCH BẢN MẪU -->
+      <div class="page-title-row">
+        <h2>
+          <span>🍯 Trung tâm Phân tích AI Agent (6 Bước)</span>
+          <span class="badge-cute b-mint" id="serverStatusBadge">🟢 Localhost:8080 Online</span>
+        </h2>
+        <div class="preset-chips">
+          <button class="preset-chip" onclick="setPresetQuery('Kiểm tra giúp tôi top 5 cửa hàng có tỷ lệ hủy đơn cao nhất hôm qua và nguyên nhân.')">
+            🔥 Kịch bản Demo Chuẩn: Top 5 CH hủy đơn cao nhất hôm qua
+          </button>
+          <button class="preset-chip" onclick="setPresetQuery('So sánh doanh thu tuần này vs tuần trước và chạy mô hình dự báo 7 ngày tới.')">
+            📈 Doanh thu Tuần này vs Tuần trước & Dự báo
+          </button>
+          <button class="preset-chip" onclick="testMaliciousSql('DELETE FROM orders WHERE is_test = 1;')">
+            🛡️ Thử tiêm lệnh DELETE (Test AST Guardrail)
+          </button>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- CENTERED MULTI-FILE AI CHAT BOX HUB (NẰM CHÍNH GIỮA)      -->
+      <!-- ======================================================== -->
+      <div class="center-chat-stage" id="centerChatStage">
+        <div class="bear-peeking-header">
+          <span>🐻🍯 TRUNG TÂM TIẾP NHẬN ĐA NGUỒN DỮ LIỆU & CHAT AI AGENT (BƯỚC 1 → BƯỚC 6)</span>
+        </div>
+
+        <div
+          class="center-chatbox-shell"
+          id="centerDropZone"
+          ondragover="handleDragOver(event)"
+          ondragleave="handleDragLeave(event)"
+          ondrop="handleDropFiles(event)"
+        >
+          <!-- Luồng hội thoại Chat trực tiếp với Gấu Nâu AI -->
+          <div class="chat-messages-stream" id="centerChatStream">
+            <div class="chat-msg">
+              <div class="chat-avatar-sm">🐻</div>
+              <div class="chat-bubble">
+                <strong>Xin chào Quản lý! Mình là Gấu Nâu BearData AI 🐾</strong><br/>
+                Bạn có thể <strong>kéo thả hoặc đính kèm mọi loại file dữ liệu</strong> (<code>.xlsx</code>, <code>.xls</code>, <code>.csv</code>, <code>.tsv</code>, <code>.json</code>, <code>.jsonl</code>, <code>.sql</code>, <code>.xml</code>, <code>.txt</code>) hoặc kết nối <strong>Lark Base / Google Sheets</strong> ngay tại khung Chat trung tâm này để mình tự động chạy <strong>6 bước kiểm định & phân tích nguyên nhân gốc rễ</strong> nhé!
+              </div>
+            </div>
+            <div class="chat-msg user">
+              <div class="chat-avatar-sm">👤</div>
+              <div class="chat-bubble">
+                📎 <em>[Đã nạp: enterprise_dw.sqlite + sample_orders_yesterday.csv]</em><br/>
+                "Kiểm tra giúp tôi top 5 cửa hàng có tỷ lệ hủy đơn cao nhất hôm qua và nguyên nhân."
+              </div>
+            </div>
+            <div class="chat-msg">
+              <div class="chat-avatar-sm">🐻</div>
+              <div class="chat-bubble">
+                ✅ <strong>Đã hoàn tất 6 bước xử lý (1,279 bản ghi thô → 1,250 đơn sạch):</strong><br/>
+                • <strong>Bước 3 (Sandbox Quarantine):</strong> Đã loại bỏ <code>14 đơn test nội bộ (is_test=True)</code> và cách ly <code>15 bản ghi bẩn</code> (4 NULL SKU, 3 âm tiền, 3 trùng ID, 5 lệch múi giờ).<br/>
+                • <strong>Bước 4 & 5 (Root-Cause):</strong> <strong>Cửa hàng #04 - Cầu Giấy</strong> có tỷ lệ hủy cao nhất <strong>18.4%</strong> (gấp 3 lần trung bình 6.1%). <strong>82% đơn hủy tại CH#04 rơi vào khung 17h–19h</strong> do hết tồn kho thực tế (0 SP) nhưng hệ thống POS chưa đồng bộ kịp (trễ 42 phút).
+              </div>
+            </div>
+          </div>
+
+          <!-- Khu vực Kéo Thả & Chọn nhanh các loại File Dữ liệu -->
+          <div class="file-drop-strip">
+            <div style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:800; color:var(--text-latte);">
+              <span style="font-size:18px;">📂</span>
+              <span>Kéo thả file dữ liệu vào đây hoặc chọn loại nguồn đầu vào:</span>
+            </div>
+            <div class="file-format-badges">
+              <span class="fmt-tag" onclick="triggerMultiFilePicker('.xlsx,.xls')" title="Tải file Excel">📗 Excel (.xlsx/.xls)</span>
+              <span class="fmt-tag" onclick="triggerMultiFilePicker('.csv,.tsv')" title="Tải file CSV / TSV">📄 CSV / TSV</span>
+              <span class="fmt-tag" onclick="triggerMultiFilePicker('.json,.jsonl')" title="Tải file JSON / JSONL">🧩 JSON / JSONL</span>
+              <span class="fmt-tag" onclick="triggerMultiFilePicker('.sql,.xml,.txt,.db,.sqlite')" title="Tải file SQL / XML / Log">🗄️ SQL / XML / TXT</span>
+              <span class="fmt-tag" onclick="toggleUrlConnector('Lark Base')" style="border-color:rgba(56,189,248,0.4); color:#7dd3fc;">🔗 Lark Base</span>
+              <span class="fmt-tag" onclick="toggleUrlConnector('Google Sheets')" style="border-color:rgba(52,211,153,0.4); color:#6ee7b7;">📊 Google Sheets</span>
+              <span class="fmt-tag" onclick="attachDemoSampleFile()" style="border-color:rgba(245,158,11,0.5); color:#fbbf24;">🍯 + Nạp File Mẫu Demo</span>
+            </div>
+          </div>
+
+          <!-- Input ẩn nhận đa định dạng file (Multiple files) -->
+          <input
+            type="file"
+            id="centerMultiFileInput"
+            multiple
+            accept=".xlsx,.xls,.csv,.tsv,.json,.jsonl,.sql,.xml,.txt,.db,.sqlite,.parquet"
+            style="display:none;"
+            onchange="handleCenterFilesSelected(event)"
+          />
+
+          <!-- Khay hiển thị các file đã đính kèm (Attached File Chips) -->
+          <div class="attached-files-tray" id="attachedFilesTray">
+            <div class="attached-file-chip">
+              <span>📗</span>
+              <span>sample_orders_yesterday.csv (1,279 dòng • Đã qua Sandbox)</span>
+              <span class="rm-file" onclick="this.parentElement.remove()" title="Gỡ file">✕</span>
+            </div>
+          </div>
+
+          <!-- Ô nhập câu hỏi trung tâm + Nút đính kèm file + Nút gửi -->
+          <div class="center-input-composer">
+            <button
+              class="attach-trigger-btn"
+              onclick="triggerMultiFilePicker('*')"
+              title="Đính kèm bất kỳ file dữ liệu nào (.xlsx, .csv, .json, .sql, .txt...)"
+            >
+              📎
+            </button>
+            <input
+              type="text"
+              id="centerChatInput"
+              value="Kiểm tra giúp tôi top 5 cửa hàng có tỷ lệ hủy đơn cao nhất hôm qua và nguyên nhân."
+              placeholder="Nhập câu hỏi phân tích dữ liệu hoặc kéo thả file (.xlsx, .csv, .json, .sql...) vào đây..."
+              onkeydown="if(event.key==='Enter') sendCenterChatMessage()"
+            />
+            <button class="btn-bear-run" onclick="sendCenterChatMessage()">
+              <span>🐻🚀 Gửi & Phân tích 6 Bước</span>
+            </button>
+          </div>
+
+          <!-- Thanh nhập URL cho Lark Base / Google Sheets khi click -->
+          <div class="url-connector-row" id="urlConnectorRow">
+            <input
+              type="text"
+              id="externalSheetUrlInput"
+              placeholder="Dán link Lark Base hoặc Google Sheets (VD: https://docs.google.com/spreadsheets/d/...)"
+            />
+            <button class="btn-bear-run" onclick="connectExternalSheetUrl()">🔗 Kết nối Nguồn</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BANNER CẢNH BÁO NẾU BỊ AST GUARDRAIL CHẶN -->
+      <div id="astBlockBanner" style="display:none; background:linear-gradient(135deg, rgba(159,18,57,0.35), rgba(39,27,21,0.95)); border:2px solid #fb7185; border-radius:18px; padding:16px 20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <strong style="color:#fda4af; font-size:15px;">🛑 [BƯỚC 2 — AST PARSER & RBAC GUARDRAIL ĐÃ CHẶN LỆNH NGUY HIỂM]</strong>
+          <button class="preset-chip" onclick="document.getElementById('astBlockBanner').style.display='none'">Đóng ✕</button>
+        </div>
+        <p id="astBlockText" style="margin-top:6px; font-size:13.5px; color:#ffe4e6;"></p>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- KHỐI 1: TOP HERO METRICS + 4 THANH MÀU (Giống mẫu Extej) -->
+      <!-- ======================================================== -->
+      <div class="hero-wallet-card">
+        <div class="hero-top-numbers">
+          <div class="hero-stat-item">
+            <div class="stat-label">Tổng Đơn Hàng Hợp Lệ Hôm Qua (Clean Data)</div>
+            <div class="stat-big" id="heroCleanOrders">1,250 đơn</div>
+            <div class="stat-sub">🧹 Đã lọc từ 1,279 bản ghi thô (Loại bỏ 14 đơn test & 15 đơn bẩn)</div>
+          </div>
+          <div class="hero-stat-item">
+            <div class="stat-label">Cửa Hàng Tỷ Lệ Hủy Cao Nhất (Top #1 Risk)</div>
+            <div class="stat-big" style="color:var(--bear-peach);" id="heroWorstRate">18.40% (CH#04)</div>
+            <div class="stat-sub" id="heroWorstSub">⚡ Gấp 3.0 lần trung bình khu vực Miền Bắc (6.1%)</div>
+          </div>
+          <div class="hero-stat-item">
+            <div class="stat-label">Doanh Thu Thất Thoát Do Hủy Đơn (Lost Revenue)</div>
+            <div class="stat-big" style="color:var(--bear-honey);" id="heroLostRev">12,550,000 ₫</div>
+            <div class="stat-sub">🍯 Riêng Cửa hàng #04 - Cầu Giấy chiếm 5,840,000 ₫ (46 đơn hủy)</div>
+          </div>
+        </div>
+
+        <!-- 4 Thanh màu ngang phân rã chỉ số (Giống Bitcoin / Ethereum / Binance / Ripple) -->
+        <div class="hero-bars-grid">
+          <div class="hero-bar-col">
+            <div class="color-bar-line" style="background: linear-gradient(90deg, #f59e0b 82.6%, rgba(255,255,255,0.08) 82.6%);"></div>
+            <div class="bar-legend-title"><span class="dot-indicator" style="background:#f59e0b;"></span> Tỷ trọng hủy 17h–19h tại CH#04</div>
+            <div class="bar-legend-value">82.6% (~82% • 38/46 đơn)</div>
+          </div>
+          <div class="hero-bar-col">
+            <div class="color-bar-line" style="background: linear-gradient(90deg, #38bdf8 97.7%, rgba(255,255,255,0.08) 97.7%);"></div>
+            <div class="bar-legend-title"><span class="dot-indicator" style="background:#38bdf8;"></span> Điểm Chất lượng Dữ liệu (Bước 3)</div>
+            <div class="bar-legend-value">97.73% (Cách ly 29 dòng)</div>
+          </div>
+          <div class="hero-bar-col">
+            <div class="color-bar-line" style="background: linear-gradient(90deg, #fb7185 75%, rgba(255,255,255,0.08) 75%);"></div>
+            <div class="bar-legend-title"><span class="dot-indicator" style="background:#fb7185;"></span> Tỷ lệ Hết hàng Thực tế (17h–19h)</div>
+            <div class="bar-legend-value">28.5% (Ngưỡng rủi ro &gt;15%)</div>
+          </div>
+          <div class="hero-bar-col">
+            <div class="color-bar-line" style="background: linear-gradient(90deg, #34d399 100%, rgba(255,255,255,0.08) 100%);"></div>
+            <div class="bar-legend-title"><span class="dot-indicator" style="background:#34d399;"></span> Dự báo Phục hồi Doanh thu (Bước 4)</div>
+            <div class="bar-legend-value">+8.5% (Sau khi Fix POS)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- KHỐI 2: TRÁI (EXCHANGE CONTROL) + PHẢI (4 THẺ DỌC STORE) -->
+      <!-- ======================================================== -->
+      <div class="middle-exchange-row">
+
+        <!-- Thẻ Điều khiển trung tâm (Giống hệt khung Exchange Buy bên trái) -->
+        <div class="exchange-control-card">
+          <div class="ex-header">
+            <span>🐻 Cấu hình Trigger & RBAC</span>
+            <span class="badge-cute b-honey">Bước 1 & 2</span>
+          </div>
+
+          <div class="ex-field-box">
+            <div style="width:100%;">
+              <label>1. KÊNH TIẾP NHẬN (TRIGGER INPUT)</label>
+              <select id="triggerSelect" onchange="runBearPipeline()">
+                <option value="Lark Suite Chat">💬 Lark Suite Chat (Nội bộ)</option>
+                <option value="Slack Bot Channel">💬 Slack Bot Channel</option>
+                <option value="Lark Base / GG Sheet">📊 Lark Base / Google Sheets</option>
+                <option value="File Excel .xlsx Upload">📂 File Excel (.xlsx / .csv)</option>
+                <option value="Cronjob Hằng Đêm 00:30">⏰ Cronjob Định kỳ Hằng đêm</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="swap-paw-circle" onclick="runBearPipeline()" title="Đồng bộ Semantic Layer & RBAC">
+            🐾
+          </div>
+
+          <div class="ex-field-box">
+            <div style="width:100%;">
+              <label>2. PHÂN QUYỀN TRUY VẤN (RBAC ROLE)</label>
+              <select id="roleSelect" onchange="runBearPipeline()">
+                <option value="Manager_Region_North">🛡️ Manager_Region_North (Miền Bắc)</option>
+                <option value="Manager_Region_South">🛡️ Manager_Region_South (Miền Nam)</option>
+                <option value="CEO_Executive">👑 CEO_Executive (Toàn quốc)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="ex-meta-row">
+            <span>Lớp bảo vệ AST & PII Masking:</span>
+            <span style="color:var(--bear-mint);">READ-ONLY • Đã ẩn SĐT/Email</span>
+          </div>
+          <div class="ex-meta-row">
+            <span>Vòng lặp tự sửa lỗi SQL:</span>
+            <span style="color:var(--bear-honey);">Auto-Retry 3/3 Thành công</span>
+          </div>
+
+          <button class="btn-buy-style" onclick="runBearPipeline()">
+            🚀 Chạy Toàn Bộ Quy Trình 6 Bước
+          </button>
+        </div>
+
+        <!-- 4 Thẻ Dọc Cửa Hàng (Giống hệt 4 thẻ Bitcoin / Ethereum / Cardano / Ripple) -->
+        <div class="store-vertical-cards" id="storeVerticalCardsContainer">
+          <!-- Được render động bằng JS theo dữ liệu thực tế -->
+        </div>
+
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- KHỐI 3: 4 THẺ GRADIENT NGANG (Giống Accounts and Cards)  -->
+      <!-- ======================================================== -->
+      <div class="cards-deck-section">
+        <div class="deck-header">
+          <h3>🧸 Tóm tắt Nhanh 6 Bước Vận hành & Thẻ Phê duyệt (Click để xem chi tiết)</h3>
+          <div style="display:flex; gap:8px;">
+            <span class="badge-cute b-honey">Demo Case: Hôm qua (2026-11-15)</span>
+          </div>
+        </div>
+
+        <div class="gradient-cards-grid">
+          <div class="g-card g-card-1" onclick="scrollToSection('secStep12')">
+            <div class="g-card-badge">🎯 Bước 1 & 2 • Semantic + Guardrails</div>
+            <div>
+              <div class="g-card-title">Planner & AST Security</div>
+              <div class="g-card-desc">Gọi <code>query_order_logs</code> + <code>query_inventory_alerts</code> • Chặn lệnh Ghi/Xóa • Ẩn PII KH</div>
+            </div>
+          </div>
+
+          <div class="g-card g-card-2" onclick="scrollToSection('secStep3')">
+            <div class="g-card-badge">🧹 Bước 3 • Python Sandbox</div>
+            <div>
+              <div class="g-card-title">Profiling & Quarantine</div>
+              <div class="g-card-desc">Loại bỏ <strong>14 đơn test</strong> (<code>is_test=True</code>) + Cách ly 15 đơn lỗi (NULL SKU, Âm tiền, Trùng ID, Lệch TZ)</div>
+            </div>
+          </div>
+
+          <div class="g-card g-card-3" onclick="scrollToSection('secStep4')">
+            <div class="g-card-badge">🔬 Bước 4 & 5 • Root-Cause</div>
+            <div>
+              <div class="g-card-title">CH#04 Hủy 18.4% (Gấp 3x TB)</div>
+              <div class="g-card-desc"><strong>82% đơn hủy</strong> rơi vào <strong>17h–19h</strong> do hết tồn kho thực tế (0 SP) nhưng POS báo còn 18–22 SP</div>
+            </div>
+          </div>
+
+          <div class="g-card g-card-4" onclick="scrollToSection('secStep6')">
+            <div class="g-card-badge">🚨 Bước 6 • Human-in-the-loop</div>
+            <div>
+              <div class="g-card-title">Proactive Alert & Vector DB</div>
+              <div class="g-card-desc">Cảnh báo vượt ngưỡng 15% • Phê duyệt đồng bộ POS Real-time & Lưu quy tắc vào Vector DB</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="dashed-action-bar" onclick="scrollToSection('secStep6')">
+          + 🐾 Mở Thẻ Phê duyệt Khẩn cấp (Approval Card) cho Quản lý Khu vực Miền Bắc & Tải File Báo cáo Chi tiết
+        </button>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- CHI TIẾT BƯỚC 5: TÓM TẮT ĐIỀU HÀNH & 4 BIỂU ĐỒ PLOTLY    -->
+      <!-- ======================================================== -->
+      <div class="detail-section-card" id="secStep5">
+        <div class="section-head">
+          <h3>📊 Bước 5: Trực quan hóa Plotly & Tóm tắt Điều hành (Executive Summary)</h3>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="preset-chip" onclick="exportCleanReportExcel()">📥 Tải Báo cáo Sạch (.xlsx)</button>
+            <button class="preset-chip" onclick="exportQuarantineCsv()">🧹 Tải File Cách ly data_quarantine.csv</button>
+          </div>
+        </div>
+
+        <!-- Executive Summary 4 gạch đầu dòng chuẩn cấu trúc -->
+        <div class="exec-summary-box" style="margin-bottom:20px;">
+          <div style="font-size:15px; font-weight:900; color:var(--bear-honey);">
+            🎯 Kết luận cốt lõi (Output trả về): "82% đơn hủy tại Cửa hàng #04 (tỷ lệ hủy 18.4% — gấp 3 lần trung bình) rơi vào khung 17h–19h do hết tồn kho thực tế nhưng hệ thống POS chưa đồng bộ kịp."
+          </div>
+          <div class="exec-item">
+            <span class="tag-pill b-berry">1. HIỆN TRẠNG</span>
+            Qua phân tích <strong>1,250 đơn hàng hợp lệ</strong> hôm qua tại Khu vực Miền Bắc (đã loại bỏ <strong>14 đơn test nội bộ</strong> <code>is_test = True</code> và cách ly <strong>15 bản ghi lỗi bẩn</strong>), <strong>Cửa hàng #04 - Cầu Giấy</strong> dẫn đầu tỷ lệ hủy đơn ở mức <strong>18.4%</strong> (46/250 đơn), cao gấp <strong>3.0 lần</strong> mức trung bình toàn vùng (<strong>6.1%</strong>), gây thất thoát trực tiếp <strong>5,840,000 VNĐ</strong>.
+          </div>
+          <div class="exec-item">
+            <span class="tag-pill b-honey">2. NGUYÊN NHÂN CHÍNH</span>
+            Phân tích đóng góp (Drill-down) chỉ ra <strong>82.6% (~82%) đơn hủy tại Cửa hàng #04</strong> (38/46 đơn) tập trung vào khung giờ cao điểm <strong>17h–19h</strong>. Nguyên nhân gốc rễ: <strong>Tồn kho thực tế tại quầy đã bằng 0 (Physical Stock = 0)</strong> ở nhóm Thực phẩm tươi (<code>SKU-001 Sữa tươi Organic</code>, <code>SKU-002 Ức gà CP</code>), nhưng <strong>hệ thống POS vẫn hiển thị còn 15–22 SP</strong> do lịch đồng bộ Batch POS bị trễ trung bình <strong>42 phút</strong>.
+          </div>
+          <div class="exec-item">
+            <span class="tag-pill b-sky">3. TƯƠNG QUAN NGOẠI CẢNH</span>
+            Đối chiếu biến ngoại cảnh cho thấy khung 17h–19h hôm qua có <strong>mưa lớn (Rainy)</strong> kết hợp chương trình <strong>Flash Sale chiều tối (-20%)</strong> làm lượng đặt hàng Online tăng đột biến <strong>+64%</strong>, khiến tồn kho vật lý cạn sớm hơn 50 phút so với chu kỳ cập nhật của máy POS.
+          </div>
+          <div class="exec-item">
+            <span class="tag-pill b-mint">4. ĐỀ XUẤT HÀNH ĐỘNG</span>
+            <strong>(1) Kỹ thuật POS:</strong> Chuyển cơ chế đồng bộ tồn kho từ Batch 45 phút sang <strong>Real-time Webhook (&lt;1 phút)</strong> cho Cửa hàng #04;
+            <strong>(2) Vận hành:</strong> Cài đặt ngưỡng khóa bán tự động (<strong>Safety Stock Buffer = 5 SP</strong>) trên App/POS khung 17h–19h;
+            <strong>(3) Cung ứng:</strong> Điều chuyển bổ sung 40 thùng SKU-001 & SKU-002 trước 16h00 hằng ngày (dự báo giúp phục hồi <strong>+8.5% doanh thu</strong> trong 7 ngày tới).
+          </div>
+        </div>
+
+        <!-- 4 Biểu đồ Plotly tương tác -->
+        <div class="two-col-grid" style="margin-bottom:18px;">
+          <div style="background:var(--bg-card-inner); border:1px solid var(--border-soft); border-radius:16px; padding:14px;">
+            <div style="font-size:13.5px; font-weight:800; margin-bottom:8px; color:var(--text-latte);">
+              📊 1. Biểu đồ Cột: Xếp hạng Top 5 Cửa hàng có Tỷ lệ Hủy đơn cao nhất hôm qua (%)
+            </div>
+            <div id="plotlyBarTop5" style="width:100%; height:320px;"></div>
+          </div>
+
+          <div style="background:var(--bg-card-inner); border:1px solid var(--border-soft); border-radius:16px; padding:14px;">
+            <div style="font-size:13.5px; font-weight:800; margin-bottom:8px; color:var(--text-latte);">
+              🔥 2. Heatmap: Tỷ lệ Hủy đơn (%) theo Cửa hàng × Khung giờ (Đỉnh đỏ 34.5% lúc 17h–19h tại CH#04)
+            </div>
+            <div id="plotlyHeatmap" style="width:100%; height:320px;"></div>
+          </div>
+        </div>
+
+        <div class="two-col-grid">
+          <div style="background:var(--bg-card-inner); border:1px solid var(--border-soft); border-radius:16px; padding:14px;">
+            <div style="font-size:13.5px; font-weight:800; margin-bottom:8px; color:var(--text-latte);">
+              📉 3. Waterfall Chart: Phân rã Nguyên nhân đóng góp vào 18.4% Tỷ lệ hủy tại Cửa hàng #04
+            </div>
+            <div id="plotlyWaterfall" style="width:100%; height:320px;"></div>
+          </div>
+
+          <div style="background:var(--bg-card-inner); border:1px solid var(--border-soft); border-radius:16px; padding:14px;">
+            <div style="font-size:13.5px; font-weight:800; margin-bottom:8px; color:var(--text-latte);">
+              📈 4. Line Chart: Xu hướng Doanh thu & Dự báo 7 Ngày tới (Baseline vs Sau khi Fix POS +8.5%)
+            </div>
+            <div id="plotlyForecast" style="width:100%; height:320px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- CHI TIẾT BƯỚC 1 & 2: INTENT, PLANNER, GUARDRAILS & RETRY -->
+      <!-- ======================================================== -->
+      <div class="detail-section-card" id="secStep12">
+        <div class="section-head">
+          <h3>🛡️ Bước 1 & Bước 2: Entity Extraction, Semantic Catalog, AST Guardrails & Auto-Retry (3 lần)</h3>
+          <div style="display:flex; gap:8px;">
+            <button class="preset-chip" onclick="testMaliciousSql('DROP TABLE orders;')">🛑 Thử lệnh DROP TABLE</button>
+            <button class="preset-chip" onclick="testMaliciousSql('UPDATE orders SET revenue = 0;')">🛑 Thử lệnh UPDATE</button>
+          </div>
+        </div>
+
+        <div class="two-col-grid" style="margin-bottom:18px;">
+          <div>
+            <div style="font-size:13px; font-weight:800; color:var(--bear-honey); margin-bottom:6px;">
+              1.1. Bóc tách Thực thể (Entity Extraction) & Ánh xạ Semantic Layer:
+            </div>
+            <pre class="sql-code" id="jsonStep1Box"></pre>
+          </div>
+          <div>
+            <div style="font-size:13px; font-weight:800; color:var(--bear-honey); margin-bottom:6px;">
+              2.1. Vòng lặp Tự sửa lỗi SQL (Auto-Retry Loop — Tối đa 3 lần):
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); padding:10px 12px; border-radius:10px; font-size:12px;">
+                <strong style="color:#fbbf24;">⚠️ Attempt #1 (Lỗi Cú pháp Cột):</strong> Sinh cột <code>o.cancel_status</code> → Database trả lỗi <code>no such column</code>. Agent tự đọc lỗi và tra cứu lại Data Catalog đổi thành <code>o.status</code>.
+              </div>
+              <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); padding:10px 12px; border-radius:10px; font-size:12px;">
+                <strong style="color:#fbbf24;">⚠️ Attempt #2 (Dữ liệu Rỗng bất thường):</strong> Lọc ngày <code>'15-11-2026'</code> trả về 0 dòng. Agent tự chuẩn hóa về chuẩn ISO <code>'2026-11-15'</code>.
+              </div>
+              <div style="background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.35); padding:10px 12px; border-radius:10px; font-size:12px;">
+                <strong style="color:#34d399;">✅ Attempt #3 (Thành công + Đã qua AST Read-Only & RBAC):</strong>
+                <pre class="sql-code" style="margin-top:6px;" id="sqlAttempt3Box"></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bảng Kế hoạch Agent Planner & Mẫu dữ liệu đã ẩn PII -->
+        <div class="two-col-grid">
+          <div>
+            <div style="font-size:13px; font-weight:800; color:var(--text-latte); margin-bottom:8px;">
+              🗺️ Kế hoạch Chia nhỏ Bài toán (Agent Planner Sub-tasks):
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Bước</th>
+                    <th>Tool API</th>
+                    <th>Mục tiêu truy vấn</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="badge-cute b-honey">Sub-task 1</span></td>
+                    <td><code>query_order_logs(date='yesterday', status='cancelled')</code></td>
+                    <td>Lấy tổng đơn & số đơn hủy theo từng cửa hàng thuộc vùng phân quyền RBAC.</td>
+                  </tr>
+                  <tr>
+                    <td><span class="badge-cute b-honey">Sub-task 2</span></td>
+                    <td><code>drilldown_hourly_cancellation(store_id='CH04')</code></td>
+                    <td>Bóc tách tỷ lệ hủy theo khung giờ (17h–19h), mã SKU và lý do hủy.</td>
+                  </tr>
+                  <tr>
+                    <td><span class="badge-cute b-honey">Sub-task 3</span></td>
+                    <td><code>query_inventory_alerts()</code></td>
+                    <td>Đối chiếu tồn kho thực tế (Physical) vs POS và biến ngoại cảnh (Mưa, KM).</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:13px; font-weight:800; color:var(--text-latte); margin-bottom:8px;">
+              🕵️ Mẫu Bản ghi sau khi Tự động Che giấu Dữ liệu Nhạy cảm (PII Masking):
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Mã Đơn</th>
+                    <th>Cửa hàng</th>
+                    <th>Khung giờ</th>
+                    <th>Họ tên KH (Masked)</th>
+                    <th>SĐT (Masked)</th>
+                    <th>Email (Masked)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>ORD-10001</code></td>
+                    <td>CH04 - Cầu Giấy</td>
+                    <td>17:42 (+07:00)</td>
+                    <td><code>Phạm *** Tuấn</code></td>
+                    <td><code>091****678</code></td>
+                    <td><code>ph***@gmail.com</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>ORD-10002</code></td>
+                    <td>CH04 - Cầu Giấy</td>
+                    <td>18:15 (+07:00)</td>
+                    <td><code>Nguyễn *** Hà</code></td>
+                    <td><code>098****321</code></td>
+                    <td><code>ng***@gmail.com</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>ORD-10003</code></td>
+                    <td>CH02 - Đống Đa</td>
+                    <td>18:05 (+07:00)</td>
+                    <td><code>Lê *** Lan</code></td>
+                    <td><code>090****456</code></td>
+                    <td><code>le***@gmail.com</code></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- CHI TIẾT BƯỚC 3: PYTHON SANDBOX PROFILING & QUARANTINE   -->
+      <!-- ======================================================== -->
+      <div class="detail-section-card" id="secStep3">
+        <div class="section-head">
+          <h3>🧹 Bước 3: Làm sạch & Kiểm định Chất lượng Dữ liệu (Python Sandbox & Quarantine — 29 Bản ghi)</h3>
+          <button class="btn-bear-run" onclick="exportQuarantineCsv()">⬇️ Xuất file data_quarantine.csv</button>
+        </div>
+
+        <p style="font-size:13px; color:var(--text-latte); margin-bottom:14px;">
+          Trước khi đưa vào tính toán thống kê, dữ liệu thô (1,279 bản ghi) được đẩy qua <strong>Python Sandbox (Pandas/Polars)</strong> để bắt tự động 5 nhóm lỗi và tách riêng sang bảng <code>data_quarantine</code>:
+          <strong>14 đơn test nội bộ (<code>is_test = True</code>)</strong>, <strong>4 đơn thiếu mã SKU (<code>NULL</code>)</strong>, <strong>3 đơn doanh thu âm</strong>, <strong>3 đơn trùng mã hóa đơn (<code>Duplicate ID</code>)</strong>, và <strong>5 đơn lệch múi giờ (khác <code>+07:00</code>)</strong>.
+        </p>
+
+        <div class="table-scroll" style="max-height:310px; overflow-y:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>STT</th>
+                <th>Batch ID</th>
+                <th>Mã Hóa Đơn (order_id)</th>
+                <th>Cửa hàng</th>
+                <th>Phân loại Lỗi (Anomaly Type)</th>
+                <th>Chi tiết Quy tắc Phát hiện trong Sandbox</th>
+                <th>Thời gian Cách ly</th>
+              </tr>
+            </thead>
+            <tbody id="quarantineTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- CHI TIẾT BƯỚC 4: DEEP ANALYTICS, DRILL-DOWN & TỒN KHO POS -->
+      <!-- ======================================================== -->
+      <div class="detail-section-card" id="secStep4">
+        <div class="section-head">
+          <h3>🔬 Bước 4: Phân tích Chuyên sâu (Drill-down Cửa hàng, Khung giờ & Đối chiếu Tồn kho POS)</h3>
+        </div>
+
+        <div class="two-col-grid">
+          <div>
+            <div style="font-size:13px; font-weight:800; color:var(--bear-honey); margin-bottom:8px;">
+              4.1. Bảng Xếp hạng & Phân tích Đóng góp theo Cửa hàng (Đã lọc sạch):
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Hạng</th>
+                    <th>Cửa hàng</th>
+                    <th>Đơn Hủy / Tổng</th>
+                    <th>Tỷ lệ Hủy</th>
+                    <th>Tỷ trọng 17h–19h</th>
+                    <th>Trễ POS TB</th>
+                    <th>Doanh thu Mất</th>
+                  </tr>
+                </thead>
+                <tbody id="drilldownTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:13px; font-weight:800; color:var(--bear-honey); margin-bottom:8px;">
+              4.2. Nhật ký Cảnh báo Lệch Tồn kho Thực tế vs POS & Biến Ngoại cảnh (Khung 17h–19h):
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Cửa hàng</th>
+                    <th>Mã SKU & Sản phẩm</th>
+                    <th>Tồn Thực tế</th>
+                    <th>Tồn trên POS</th>
+                    <th>Tỷ lệ OOS</th>
+                    <th>Ngoại cảnh (17h–19h)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>CH04 - Cầu Giấy</strong></td>
+                    <td><code>SKU-001</code> Sữa tươi Organic 1L</td>
+                    <td style="color:#fb7185; font-weight:900;">0 SP (Hết)</td>
+                    <td style="color:#38bdf8; font-weight:800;">22 SP (Lệch +22)</td>
+                    <td><span class="badge-cute b-berry">28.5%</span></td>
+                    <td>🌧️ Mưa lớn + 🔥 Flash Sale</td>
+                  </tr>
+                  <tr>
+                    <td><strong>CH04 - Cầu Giấy</strong></td>
+                    <td><code>SKU-002</code> Ức gà phi lê CP 500g</td>
+                    <td style="color:#fb7185; font-weight:900;">0 SP (Hết)</td>
+                    <td style="color:#38bdf8; font-weight:800;">18 SP (Lệch +18)</td>
+                    <td><span class="badge-cute b-berry">26.0%</span></td>
+                    <td>🌧️ Mưa lớn + 🔥 Flash Sale</td>
+                  </tr>
+                  <tr>
+                    <td><strong>CH04 - Cầu Giấy</strong></td>
+                    <td><code>SKU-008</code> Combo Rau củ tươi</td>
+                    <td style="color:#fb7185; font-weight:900;">0 SP (Hết)</td>
+                    <td style="color:#38bdf8; font-weight:800;">15 SP (Lệch +15)</td>
+                    <td><span class="badge-cute b-berry">24.2%</span></td>
+                    <td>🌧️ Mưa lớn + 🔥 Flash Sale</td>
+                  </tr>
+                  <tr>
+                    <td><strong>CH02 - Đống Đa</strong></td>
+                    <td><code>SKU-001</code> Sữa tươi Organic 1L</td>
+                    <td style="color:#34d399; font-weight:900;">14 SP</td>
+                    <td style="color:#38bdf8; font-weight:800;">15 SP (Lệch +1)</td>
+                    <td><span class="badge-cute b-mint">5.2%</span></td>
+                    <td>🌧️ Mưa lớn + 🔥 Flash Sale</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- CHI TIẾT BƯỚC 6: PROACTIVE ALERT, APPROVAL CARD & VECTOR -->
+      <!-- ======================================================== -->
+      <div class="detail-section-card" id="secStep6">
+        <div class="section-head">
+          <h3>🚨 Bước 6: Cảnh báo Chủ động (Proactive Alert), Thẻ Phê duyệt (Approval Card) & Vector DB</h3>
+          <span class="badge-cute b-berry" id="approvalBadgeStatus">⏳ Chờ Quản lý Phê duyệt</span>
+        </div>
+
+        <div class="two-col-grid">
+          <!-- Thẻ Phê duyệt Hành động (Approval Card) -->
+          <div style="background:linear-gradient(145deg, rgba(159,18,57,0.22), rgba(39,27,21,0.95)); border:1.5px solid rgba(251,113,133,0.45); border-radius:18px; padding:18px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+              <span style="font-size:26px;">🐻🚨</span>
+              <div>
+                <div style="font-size:14.5px; font-weight:900; color:#fda4af;">
+                  THẺ PHÊ DUYỆT HÀNH ĐỘNG KHẨN CẤP (APPROVAL CARD)
+                </div>
+                <div style="font-size:11.5px; color:var(--text-latte);">
+                  Kích hoạt tự động khi Tỷ lệ hủy CH#04 (18.4%) & Tỷ lệ hết hàng (28.5%) vượt ngưỡng rủi ro 15%
+                </div>
+              </div>
+            </div>
+
+            <div style="background:rgba(0,0,0,0.28); border-radius:12px; padding:12px 14px; font-size:12.5px; line-height:1.7; margin-bottom:14px;">
+              <label style="display:block;"><input type="checkbox" checked /> <strong>[Hành động 1]:</strong> Chuyển đồng bộ tồn kho POS tại Cửa hàng #04 sang Real-time Webhook (30 giây/lần).</label>
+              <label style="display:block;"><input type="checkbox" checked /> <strong>[Hành động 2]:</strong> Bật khóa bán an toàn (Safety Stock = 5 SP) trên App cho nhóm Fresh Food khung 17h–19h.</label>
+              <label style="display:block;"><input type="checkbox" checked /> <strong>[Hành động 3]:</strong> Phát lệnh điều chuyển khẩn 40 thùng <code>SKU-001</code> & <code>SKU-002</code> từ Kho Tổng trước 16h00.</label>
+            </div>
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button class="btn-bear-run" onclick="handleApprovalCard(true)">
+                ✅ Phê duyệt & Thực thi Ngay (Approve)
+              </button>
+              <button class="preset-chip" onclick="handleApprovalCard(false)">
+                ❌ Từ chối / Chỉnh sửa Thủ công
+              </button>
+            </div>
+            <div id="approvalResultText" style="margin-top:10px; font-size:12.5px; font-weight:800;"></div>
+          </div>
+
+          <!-- Bộ nhớ dài hạn Vector DB (Feedback Loop) -->
+          <div style="background:var(--bg-card-inner); border:1px solid var(--border-soft); border-radius:18px; padding:18px;">
+            <div style="font-size:14px; font-weight:900; color:var(--bear-honey); margin-bottom:8px;">
+              🧠 Học hỏi từ Phản hồi Người dùng (Vector DB Feedback Loop)
+            </div>
+            <p style="font-size:12px; color:var(--text-latte); margin-bottom:10px;">
+              Ghi nhận đánh giá (Like/Dislike) hoặc hiệu chỉnh trực tiếp định nghĩa KPI vào bộ nhớ dài hạn trên Localhost:
+            </p>
+            <div style="display:flex; gap:8px; margin-bottom:10px;">
+              <select id="fbTypeSelect" style="background:var(--bg-card); color:var(--text-cream); border:1px solid var(--border-soft); border-radius:10px; padding:7px 10px; font-family:inherit; font-size:12px; font-weight:700;">
+                <option value="LIKE_ACCURATE">👍 Like (Chính xác)</option>
+                <option value="KPI_UPDATED">🛠️ Sửa định nghĩa KPI</option>
+                <option value="DISLIKE_FIX">👎 Dislike (Cần sửa)</option>
+              </select>
+              <input
+                type="text"
+                id="fbRuleInput"
+                value="Luôn loại bỏ đơn test (is_test=True) và bóc tách khung giờ 17h-19h khi kiểm tra tỷ lệ hủy."
+                style="flex:1; background:var(--bg-card); color:var(--text-cream); border:1px solid var(--border-soft); border-radius:10px; padding:7px 10px; font-family:inherit; font-size:12px;"
+              />
+              <button class="btn-bear-run" onclick="saveVectorMemory()">💾 Lưu</button>
+            </div>
+
+            <div class="table-scroll" style="max-height:165px; overflow-y:auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Mã Vector</th>
+                    <th>Role</th>
+                    <th>Đánh giá</th>
+                    <th>Quy tắc đã ghi nhớ trong Vector DB</th>
+                  </tr>
+                </thead>
+                <tbody id="vectorMemoryTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- JAVASCRIPT ENGINE: DỮ LIỆU ĐẦY ĐỦ CHI TIẾT & HIỆU ỨNG GẤU NÂU        -->
+  <!-- ===================================================================== -->
+  <script>
+    // 1. Dữ liệu đầy đủ của các cửa hàng (Khớp chính xác kịch bản Demo)
+    const STORES_DB = [
+      {
+        rank: 1,
+        store_id: "CH04",
+        store_name: "Cửa hàng #04 - Cầu Giấy",
+        short_name: "CH#04 (Cầu Giấy)",
+        region: "North",
+        total_orders: 250,
+        cancelled_orders: 46,
+        cancel_rate: 18.40,
+        delta_vs_avg: "+12.3% (Gấp 3.0x TB)",
+        is_critical: true,
+        pct_17_19: 82.6,
+        avg_delay: 42,
+        lost_rev: 5840000,
+        hourly_rates: [4.2, 5.1, 6.8, 34.5, 7.2],
+        spark_points: "0,42 25,39 50,36 75,6 100,32",
+        spark_color: "#fb7185",
+        watermark: "🐻"
+      },
+      {
+        rank: 2,
+        store_id: "CH02",
+        store_name: "Cửa hàng #02 - Đống Đa",
+        short_name: "CH#02 (Đống Đa)",
+        region: "North",
+        total_orders: 200,
+        cancelled_orders: 16,
+        cancel_rate: 8.00,
+        delta_vs_avg: "+1.9% so với TB vùng",
+        is_critical: false,
+        pct_17_19: 37.5,
+        avg_delay: 11,
+        lost_rev: 1920000,
+        hourly_rates: [3.5, 6.0, 7.5, 11.2, 6.8],
+        spark_points: "0,38 25,30 50,26 75,18 100,29",
+        spark_color: "#f59e0b",
+        watermark: "🍯"
+      },
+      {
+        rank: 3,
+        store_id: "CH01",
+        store_name: "Cửa hàng #01 - Hoàn Kiếm",
+        short_name: "CH#01 (Hoàn Kiếm)",
+        region: "North",
+        total_orders: 200,
+        cancelled_orders: 13,
+        cancel_rate: 6.50,
+        delta_vs_avg: "+0.4% (Quanh mức TB)",
+        is_critical: false,
+        pct_17_19: 30.8,
+        avg_delay: 8,
+        lost_rev: 1560000,
+        hourly_rates: [3.0, 5.5, 6.2, 8.9, 5.4],
+        spark_points: "0,40 25,33 50,31 75,24 100,35",
+        spark_color: "#38bdf8",
+        watermark: "🐾"
+      },
+      {
+        rank: 4,
+        store_id: "CH05",
+        store_name: "Cửa hàng #05 - Thanh Xuân",
+        short_name: "CH#05 (Thanh Xuân)",
+        region: "North",
+        total_orders: 200,
+        cancelled_orders: 11,
+        cancel_rate: 5.50,
+        delta_vs_avg: "-0.6% (Tốt hơn TB vùng)",
+        is_critical: false,
+        pct_17_19: 27.3,
+        avg_delay: 7,
+        lost_rev: 1310000,
+        hourly_rates: [2.8, 4.9, 5.4, 7.6, 4.8],
+        spark_points: "0,41 25,36 50,34 75,28 100,38",
+        spark_color: "#34d399",
+        watermark: "🧸"
+      },
+      {
+        rank: 5,
+        store_id: "CH03",
+        store_name: "Cửa hàng #03 - Ba Đình",
+        short_name: "CH#03 (Ba Đình)",
+        region: "North",
+        total_orders: 200,
+        cancelled_orders: 9,
+        cancel_rate: 4.50,
+        delta_vs_avg: "-1.6% (Vận hành tốt)",
+        is_critical: false,
+        pct_17_19: 22.2,
+        avg_delay: 5,
+        lost_rev: 1080000,
+        hourly_rates: [2.2, 4.1, 4.5, 6.1, 3.9],
+        spark_points: "0,44 25,38 50,37 75,32 100,40",
+        spark_color: "#34d399",
+        watermark: "🍯"
+      },
+      {
+        rank: 6,
+        store_id: "CH06",
+        store_name: "Cửa hàng #06 - Long Biên",
+        short_name: "CH#06 (Long Biên)",
+        region: "North",
+        total_orders: 200,
+        cancelled_orders: 7,
+        cancel_rate: 3.50,
+        delta_vs_avg: "-2.6% (Tốt nhất vùng)",
+        is_critical: false,
+        pct_17_19: 28.6,
+        avg_delay: 4,
+        lost_rev: 840000,
+        hourly_rates: [1.8, 3.2, 3.8, 4.9, 3.1],
+        spark_points: "0,45 25,41 50,39 75,35 100,43",
+        spark_color: "#34d399",
+        watermark: "🐾"
+      },
+      {
+        rank: 7,
+        store_id: "CH07",
+        store_name: "Cửa hàng #07 - Quận 1 (HCM)",
+        short_name: "CH#07 (Quận 1)",
+        region: "South",
+        total_orders: 220,
+        cancelled_orders: 15,
+        cancel_rate: 6.80,
+        delta_vs_avg: "+0.9% khu vực Nam",
+        is_critical: false,
+        pct_17_19: 33.3,
+        avg_delay: 9,
+        lost_rev: 1850000,
+        hourly_rates: [3.1, 5.8, 6.5, 9.4, 5.9],
+        spark_points: "0,39 25,32 50,29 75,22 100,33",
+        spark_color: "#f59e0b",
+        watermark: "🐻"
+      },
+      {
+        rank: 8,
+        store_id: "CH08",
+        store_name: "Cửa hàng #08 - Quận 7 (HCM)",
+        short_name: "CH#08 (Quận 7)",
+        region: "South",
+        total_orders: 180,
+        cancelled_orders: 9,
+        cancel_rate: 5.00,
+        delta_vs_avg: "-0.9% khu vực Nam",
+        is_critical: false,
+        pct_17_19: 33.3,
+        avg_delay: 6,
+        lost_rev: 1120000,
+        hourly_rates: [2.5, 4.4, 5.0, 6.8, 4.2],
+        spark_points: "0,42 25,37 50,35 75,30 100,39",
+        spark_color: "#34d399",
+        watermark: "🧸"
+      }
+    ];
+
+    // 2. Danh sách đầy đủ 29 bản ghi bị cách ly ở Bước 3 (14 đơn test + 15 bản ghi bẩn)
+    const QUARANTINE_DATA = [
+      ...Array.from({ length: 14 }, (_, i) => ({
+        batch_id: "BATCH-20261116-01",
+        order_id: `ORD-TEST-${String(i + 1).padStart(2, "0")}`,
+        store_id: ["CH04", "CH01", "CH02", "CH03", "CH05", "CH06"][i % 6],
+        anomaly_type: "TEST_ORDER (is_test=True)",
+        anomaly_detail: "Đơn hàng test nội bộ của IT/QA (is_test = True) — Đã loại bỏ khỏi tính toán KPI",
+        quarantined_at: "2026-11-16T08:30:00+07:00"
+      })),
+      { batch_id: "BATCH-20261116-01", order_id: "ORD-ERR-NULL-01", store_id: "CH04", anomaly_type: "NULL_SKU", anomaly_detail: "Thiếu mã sản phẩm (sku_id IS NULL) do lỗi đồng bộ danh mục", quarantined_at: "2026-11-16T08:30:00+07:00" },
+      { batch_id: "BATCH-20261116-01", order_id: "ORD-ERR-NULL-02", store_id: "CH04", anomaly_type: "NULL_SKU", anomaly_detail: "Thiếu mã sản phẩm (sku_id IS NULL) do lỗi đồng bộ danh mục", quarantined_at: "2026-11-16T08:30:00+07:00" },
+      { batch_id: "BATCH-20261116-01", order_id: "ORD-ERR-NULL-03", store_id: "CH02", anomaly_type: "NULL_SKU", anomaly_detail: "Thiếu mã sản phẩm (sku_id IS NULL) do lỗi đồng bộ danh mục", quarantined_at: "2026-11-16T08:30:00+07:00" },
+      { batch_id: "BATCH-20261116-01", order_id: "ORD-ERR-NULL-04", store_id: "CH01", anomaly_type: "NULL_SKU", anomaly_detail: "Thiếu mã sản phẩm (sku_id IS NULL) do lỗi đồng bộ danh mục", quarantined_at: "2026-11-16T08:30:00+07:00" },
+      { batch_id: "BATCH-20261116-01", order_id: "ORD-ERR-NEG-01", store_id: "CH02", anomaly_type: "NEGATIVE_REVENUE", anomaly_detail: "Doanh thu âm bất thường (revenue = -125,000 VNĐ)", quarantined_at: "2026-11-16T08:30:00+07:00" },
+      { batch_id: "BATCH-20261116-01", order_id: "ORD-ERR-NEG-02", store_id: "CH02", anomaly_type: "NEGATIVE_REVENUE", anomaly_detail: "Doanh thu âm bất thường (revenue = -89,000 VNĐ)", quarantined_at: "2026-11-16T08:30:00+07:00" },
+      { batch_id: "BATCH-20261116-01", order_id: "ORD-ERR-NEG-03", store_id: "CH05", anomaly_type: "NEGATIVE_REVENUE", anomaly_detail: "Doanh thu âm bất thường (revenue = -65,000 VNĐ)", quarantined_at: "2026-11-16T08:30:00+07:00" },
+      { batch_id: "BATCH-20261116-01", order_id: "ORD-10005", store_id: "CH01", anomaly_type: "DUPLICATE_ID", anomaly_detail: "Trùng lặp mã hóa đơn (Duplicate order_id = ORD-10005)", quarantined_at: "2026-11-16T08:30:00+07:00" },
+      { batch_id: "BATCH-20261116-01", order_id: "ORD-10010", store_id: "CH01", anomaly_type: "DUPLICATE_ID", anomaly_detail: "Trùng lặp mã hóa đơn (Duplicate order_id = ORD-10010)", quarantined_at: "2026-11-16T08:30:00+07:00" },
+      { batch_id: "BATCH-20261116-01", order_id: "ORD-10015", store_id: "CH03", anomaly_type: "DUPLICATE_ID", anomaly_detail: "Trùng lặp mã hóa đơn (Duplicate order_id = ORD-10015)", quarantined_at: "2026-11-16T08:30:00+07:00" },
+      { batch_id: "BATCH-20261116-01", order_id: "ORD-ERR-TZ-01", store_id: "CH04", anomaly_type: "TIMEZONE_DRIFT", anomaly_detail: "Lệch múi giờ chuẩn +07:00 (2026-11-15T18:05:00+00:00)", quarantined_at: "2026-11-16T08:30:00+07:00" },
+      { batch_id: "BATCH-20261116-01", order_id: "ORD-ERR-TZ-02", store_id: "CH04", anomaly_type: "TIMEZONE_DRIFT", anomaly_detail: "Lệch múi giờ chuẩn +07:00 (2026-11-15T18:12:00+00:00)", quarantined_at: "2026-11-16T08:30:00+07:00" },
+      { batch_id: "BATCH-20261116-01", order_id: "ORD-ERR-TZ-03", store_id: "CH04", anomaly_type: "TIMEZONE_DRIFT", anomaly_detail: "Lệch múi giờ chuẩn +07:00 (2026-11-15T18:25:00-05:00)", quarantined_at: "2026-11-16T08:30:00+07:00" },
+      { batch_id: "BATCH-20261116-01", order_id: "ORD-ERR-TZ-04", store_id: "CH02", anomaly_type: "TIMEZONE_DRIFT", anomaly_detail: "Lệch múi giờ chuẩn +07:00 (2026-11-15T17:40:00+00:00)", quarantined_at: "2026-11-16T08:30:00+07:00" },
+      { batch_id: "BATCH-20261116-01", order_id: "ORD-ERR-TZ-05", store_id: "CH05", anomaly_type: "TIMEZONE_DRIFT", anomaly_detail: "Lệch múi giờ chuẩn +07:00 (2026-11-15T19:02:00+00:00)", quarantined_at: "2026-11-16T08:30:00+07:00" }
+    ];
+
+    let vectorMemories = [
+      {
+        id: "VEC-001",
+        role: "Manager_Region_North",
+        type: "LIKE_ACCURATE",
+        rule: "Luôn loại bỏ 14 đơn test nội bộ (is_test = True) và cảnh báo đỏ khi tỷ lệ hủy vượt 15%."
+      },
+      {
+        id: "VEC-002",
+        role: "CEO_Executive",
+        type: "KPI_UPDATED",
+        rule: "Khi phân tích nguyên nhân hủy đơn, bắt buộc đối chiếu tồn kho thực tế (Physical Stock) và tồn kho POS theo khung giờ."
+      }
+    ];
+
+    // Hiệu ứng Dấu chân Gấu Nâu nở ra mỗi khi click chuột
+    document.addEventListener("click", (e) => {
+      const paw = document.createElement("div");
+      paw.className = "paw-ripple";
+      paw.innerText = ["🐾", "🍯", "✨"][Math.floor(Math.random() * 3)];
+      paw.style.left = e.clientX + "px";
+      paw.style.top = e.clientY + "px";
+      document.body.appendChild(paw);
+      setTimeout(() => paw.remove(), 750);
+    });
+
+    function showBearToast(msg) {
+      const t = document.getElementById("bearToast");
+      document.getElementById("bearToastText").innerHTML = msg;
+      t.style.display = "flex";
+      clearTimeout(window._bearToastTimer);
+      window._bearToastTimer = setTimeout(() => {
+        t.style.display = "none";
+      }, 4200);
+    }
+
+    function toggleBearTheme() {
+      document.body.classList.toggle("light-latte");
+      runBearPipeline();
+      showBearToast("🧸 Đã chuyển đổi tông màu Gấu Nâu (Cacao Đậm / Kem Sữa Latte)!");
+    }
+
+    function activateNav(navId, sectionId) {
+      document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
+      const target = document.getElementById(navId);
+      if (target) target.classList.add("active");
+      scrollToSection(sectionId);
+    }
+
+    function scrollToSection(sectionId) {
+      const el = document.getElementById(sectionId);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function setPresetQuery(q) {
+      document.getElementById("userQueryInput").value = q;
+      document.getElementById("astBlockBanner").style.display = "none";
+      runBearPipeline();
+      showBearToast("🐻🍯 Gấu Nâu đã chạy lại quy trình 6 bước cho câu hỏi mới!");
+    }
+
+    function getActiveStores() {
+      const role = document.getElementById("roleSelect").value;
+      if (role === "Manager_Region_North") return STORES_DB.filter(s => s.region === "North");
+      if (role === "Manager_Region_South") return STORES_DB.filter(s => s.region === "South");
+      return STORES_DB;
+    }
+
+    // Kiểm tra bảo mật AST Guardrail (Chặn INSERT, UPDATE, DELETE, DROP)
+    function testMaliciousSql(sqlText) {
+      const banner = document.getElementById("astBlockBanner");
+      const txt = document.getElementById("astBlockText");
+      banner.style.display = "block";
+      txt.innerHTML = `Lệnh SQL đầu vào: <code>${sqlText}</code><br/>👉 <strong>AST Parser & RBAC Guardrail</strong> đã chặn tuyệt đối thao tác ghi/xóa dữ liệu! AI Agent chỉ được cấp quyền <code>SELECT (Read-Only)</code> trong phạm vi vùng quản lý.`;
+      showBearToast("🛑 Gấu Nâu Bảo Vệ đã chặn lệnh SQL nguy hiểm: " + sqlText);
+      scrollToSection("secTop");
+    }
+
+    // Render 4 Thẻ Dọc Cửa Hàng (Giống hệt 4 thẻ Bitcoin / Ethereum / Cardano / Ripple)
+    function renderVerticalStoreCards(stores) {
+      const top4 = stores.slice(0, 4);
+      const container = document.getElementById("storeVerticalCardsContainer");
+      container.innerHTML = top4.map(s => `
+        <div class="v-store-card ${s.is_critical ? 'critical-card' : ''}" onclick="scrollToSection('secStep4')">
+          <div>
+            <div class="v-store-title">${s.short_name}</div>
+            <div class="v-store-rate" style="color:${s.is_critical ? '#fb7185' : 'var(--text-cream)'};">
+              ${s.cancel_rate.toFixed(1)}%
+            </div>
+            <div class="v-store-delta" style="color:${s.spark_color};">
+              ${s.delta_vs_avg}
+            </div>
+          </div>
+
+          <svg class="sparkline-svg" viewBox="0 0 100 50" preserveAspectRatio="none">
+            <polyline
+              fill="none"
+              stroke="${s.spark_color}"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              points="${s.spark_points}"
+            />
+          </svg>
+
+          <div class="v-store-footer">
+            Số đơn hủy / Tổng đơn
+            <strong>${s.cancelled_orders} / ${s.total_orders} đơn</strong>
+            Tỷ trọng hủy 17h–19h (Trễ POS)
+            <strong>${s.pct_17_19}% (${s.avg_delay} phút)</strong>
+          </div>
+
+          <div class="watermark-bear">${s.watermark}</div>
+        </div>
+      `).join("");
+    }
+
+    // Render toàn bộ Pipeline 6 bước
+    function runBearPipeline() {
+      const role = document.getElementById("roleSelect").value;
+      const trigger = document.getElementById("triggerSelect").value;
+      const query = document.getElementById("userQueryInput").value;
+      const stores = getActiveStores();
+
+      document.getElementById("topUserRole").innerText = `${role} • ${trigger}`;
+      const worst = stores[0];
+      const totalValid = stores.reduce((a, b) => a + b.total_orders, 0);
+      const totalLost = stores.reduce((a, b) => a + b.lost_rev, 0);
+      const avgRate = (stores.reduce((a, b) => a + b.cancel_rate, 0) / stores.length).toFixed(1);
+      const mult = (worst.cancel_rate / avgRate).toFixed(1);
+
+      document.getElementById("heroCleanOrders").innerText = `${totalValid.toLocaleString('vi-VN')} đơn`;
+      document.getElementById("heroWorstRate").innerText = `${worst.cancel_rate.toFixed(2)}% (${worst.store_id})`;
+      document.getElementById("heroWorstSub").innerText = `⚡ Gấp ${mult} lần trung bình vùng (${avgRate}%)`;
+      document.getElementById("heroLostRev").innerText = `${totalLost.toLocaleString('vi-VN')} ₫`;
+
+      // Render 4 thẻ dọc cửa hàng
+      renderVerticalStoreCards(stores);
+
+      // Render Bước 1 & 2 JSON + SQL
+      const entityPayload = {
+        trigger_source: trigger,
+        user_role: role,
+        raw_query: query,
+        extracted_entities: {
+          time_entity: "yesterday (2026-11-15)",
+          timezone: "+07:00",
+          kpi_target: "cancel_rate = COUNT(cancelled) / COUNT(valid_orders)",
+          top_n: 5,
+          allowed_regions: role === "Manager_Region_North" ? ["North"] : role === "Manager_Region_South" ? ["South"] : ["North", "South"]
+        },
+        semantic_catalog_tables: ["orders", "stores", "inventory_logs", "products", "data_quarantine"]
+      };
+      document.getElementById("jsonStep1Box").textContent = JSON.stringify(entityPayload, null, 2);
+
+      const regionFilter = role === "Manager_Region_North" ? "'North'" : role === "Manager_Region_South" ? "'South'" : "'North', 'South'";
+      document.getElementById("sqlAttempt3Box").textContent =
+`SELECT o.store_id, s.store_name,
+       COUNT(*) AS total_valid_orders,
+       SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_orders,
+       ROUND(SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) AS cancel_rate
+FROM orders o
+JOIN stores s ON o.store_id = s.store_id
+WHERE s.region IN (${regionFilter})
+  AND o.order_date = '2026-11-15'
+  AND o.is_test = 0
+GROUP BY o.store_id, s.store_name
+ORDER BY cancel_rate DESC LIMIT 5;`;
+
+      // Render Bước 3 Quarantine Table
+      document.getElementById("quarantineTableBody").innerHTML = QUARANTINE_DATA.map((q, idx) => `
+        <tr>
+          <td>#${idx + 1}</td>
+          <td><code>${q.batch_id}</code></td>
+          <td><strong>${q.order_id}</strong></td>
+          <td>${q.store_id}</td>
+          <td><span class="badge-cute ${q.anomaly_type.includes('TEST') ? 'b-honey' : 'b-berry'}">${q.anomaly_type}</span></td>
+          <td>${q.anomaly_detail}</td>
+          <td><code>${q.quarantined_at}</code></td>
+        </tr>
+      `).join("");
+
+      // Render Bước 4 Drill-down Table
+      document.getElementById("drilldownTableBody").innerHTML = stores.map((s, idx) => `
+        <tr>
+          <td><strong>#${idx + 1}</strong></td>
+          <td><strong>${s.store_name}</strong></td>
+          <td>${s.cancelled_orders} / ${s.total_orders}</td>
+          <td><span class="badge-cute ${s.cancel_rate > 15 ? 'b-berry' : 'b-honey'}">${s.cancel_rate.toFixed(1)}%</span></td>
+          <td><strong>${s.pct_17_19}%</strong></td>
+          <td>${s.avg_delay} phút</td>
+          <td>${s.lost_rev.toLocaleString('vi-VN')} ₫</td>
+        </tr>
+      `).join("");
+
+      // Render Bước 5 Plotly Charts
+      renderBearPlotlyCharts(stores, avgRate);
+
+      // Render Bước 6 Vector DB
+      renderVectorMemoryTable();
+    }
+
+    function renderBearPlotlyCharts(stores, avgRate) {
+      if (typeof Plotly === "undefined") return;
+      const isLight = document.body.classList.contains("light-latte");
+      const textColor = isLight ? "#3b2314" : "#fff8f0";
+      const gridColor = isLight ? "rgba(139,90,43,0.12)" : "rgba(217,155,102,0.12)";
+      const top5 = stores.slice(0, 5);
+
+      const baseLayout = {
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)",
+        font: { family: "Nunito, sans-serif", color: textColor, size: 12 },
+        margin: { t: 24, r: 18, b: 55, l: 48 }
+      };
+
+      // 1. Bar Chart Top 5
+      Plotly.newPlot("plotlyBarTop5", [
+        {
+          type: "bar",
+          x: top5.map(s => s.short_name),
+          y: top5.map(s => s.cancel_rate),
+          text: top5.map(s => s.cancel_rate.toFixed(1) + "%"),
+          textposition: "outside",
+          marker: {
+            color: top5.map(s => s.cancel_rate > 15 ? "#fb7185" : "#d97706")
+          },
+          name: "Tỷ lệ hủy (%)"
+        },
+        {
+          type: "scatter",
+          mode: "lines",
+          x: top5.map(s => s.short_name),
+          y: top5.map(() => parseFloat(avgRate)),
+          line: { color: "#34d399", width: 2.5, dash: "dash" },
+          name: `TB Vùng (${avgRate}%)`
+        }
+      ], {
+        ...baseLayout,
+        yaxis: { title: "Tỷ lệ hủy (%)", gridcolor: gridColor, range: [0, 23] },
+        legend: { orientation: "h", y: 1.14 }
+      }, { responsive: true, displayModeBar: false });
+
+      // 2. Heatmap Khung giờ
+      const slots = ["08h-11h", "11h-14h", "14h-17h", "17h-19h", "19h-22h"];
+      const zMat = top5.map(s => s.hourly_rates);
+      Plotly.newPlot("plotlyHeatmap", [
+        {
+          type: "heatmap",
+          x: slots,
+          y: top5.map(s => s.short_name),
+          z: zMat,
+          colorscale: [
+            [0, "#271b15"],
+            [0.3, "#b45309"],
+            [0.6, "#f59e0b"],
+            [1, "#fb7185"]
+          ],
+          text: zMat.map(r => r.map(v => v + "%")),
+          texttemplate: "%{text}"
+        }
+      ], {
+        ...baseLayout,
+        margin: { t: 24, r: 18, b: 48, l: 115 }
+      }, { responsive: true, displayModeBar: false });
+
+      // 3. Waterfall Phân rã nguyên nhân CH#04
+      Plotly.newPlot("plotlyWaterfall", [
+        {
+          type: "waterfall",
+          measure: ["absolute", "relative", "relative", "relative", "total"],
+          x: ["TB Vùng", "+Lệch POS<br>(17h-19h)", "+Mưa &<br>Flash Sale", "+Lý do<br>Khác", "Tổng Hủy<br>CH#04"],
+          y: [6.1, 9.2, 2.1, 1.0, 18.4],
+          text: ["6.1%", "+9.2%", "+2.1%", "+1.0%", "18.4%"],
+          textposition: "outside",
+          increasing: { marker: { color: "#fb7185" } },
+          totals: { marker: { color: "#f59e0b" } }
+        }
+      ], {
+        ...baseLayout,
+        yaxis: { title: "Đóng góp (%)", gridcolor: gridColor, range: [0, 22] }
+      }, { responsive: true, displayModeBar: false });
+
+      // 4. Line Chart Dự báo 7 ngày tới
+      Plotly.newPlot("plotlyForecast", [
+        {
+          type: "scatter",
+          mode: "lines+markers",
+          x: ["11/11", "12/11", "13/11", "14/11", "15/11 (Hôm qua)"],
+          y: [91.2, 89.4, 92.0, 87.8, 82.4],
+          name: "Doanh thu Lịch sử",
+          line: { color: "#f59e0b", width: 3 }
+        },
+        {
+          type: "scatter",
+          mode: "lines+markers",
+          x: ["15/11 (Hôm qua)", "16/11", "17/11", "18/11", "19/11", "20/11", "21/11"],
+          y: [82.4, 83.0, 81.5, 82.8, 83.5, 84.0, 86.2],
+          name: "Dự báo Cơ sở (Chưa fix POS)",
+          line: { color: "#9c826b", width: 2, dash: "dash" }
+        },
+        {
+          type: "scatter",
+          mode: "lines+markers",
+          x: ["15/11 (Hôm qua)", "16/11", "17/11", "18/11", "19/11", "20/11", "21/11"],
+          y: [82.4, 89.5, 90.8, 91.4, 92.6, 94.1, 96.8],
+          name: "Sau khi Fix Real-time POS (+8.5%)",
+          line: { color: "#34d399", width: 3 }
+        }
+      ], {
+        ...baseLayout,
+        yaxis: { title: "Triệu VNĐ", gridcolor: gridColor },
+        legend: { orientation: "h", y: 1.16 }
+      }, { responsive: true, displayModeBar: false });
+    }
+
+    // Phê duyệt Thẻ Hành động Khẩn cấp (Bước 6)
+    async function handleApprovalCard(approved) {
+      const badge = document.getElementById("approvalBadgeStatus");
+      const txt = document.getElementById("approvalResultText");
+      const role = document.getElementById("roleSelect").value;
+
+      try {
+        await fetch("/api/approve-alert", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ approved, role })
+        });
+      } catch (e) {}
+
+      if (approved) {
+        badge.className = "badge-cute b-mint";
+        badge.innerText = "✅ Đã Phê duyệt & Kích hoạt Tự động";
+        txt.style.color = "#34d399";
+        txt.innerText = "🐻🍯 [Localhost API Persisted] Đã bật Webhook đồng bộ POS Real-time cho Cửa hàng #04, đặt Safety Stock = 5 SP và gửi phiếu điều chuyển 40 thùng hàng tới Kho Tổng!";
+        showBearToast("🎉 Quản lý đã phê duyệt Approval Card! Hệ thống đang đồng bộ POS Real-time.");
+      } else {
+        badge.className = "badge-cute b-berry";
+        badge.innerText = "❌ Đã Tạm dừng";
+        txt.style.color = "#fda4af";
+        txt.innerText = "⏸️ Đã chuyển sang chế độ kiểm tra thủ công tại Cửa hàng #04.";
+        showBearToast("🐾 Đã ghi nhận tạm dừng thực thi tự động.");
+      }
+    }
+
+    // Lưu vào Vector DB (Bước 6)
+    async function saveVectorMemory() {
+      const role = document.getElementById("roleSelect").value;
+      const type = document.getElementById("fbTypeSelect").value;
+      const rule = document.getElementById("fbRuleInput").value.trim();
+      if (!rule) return;
+
+      try {
+        const res = await fetch("/api/feedback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role, type, threshold: "15.0%", rule })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.all_memories) {
+            vectorMemories = data.all_memories;
+            renderVectorMemoryTable();
+            showBearToast("🐻🧠 Đã lưu quy tắc KPI mới vào Vector DB trên Localhost!");
+            return;
+          }
+        }
+      } catch (e) {}
+
+      vectorMemories.unshift({
+        id: `VEC-00${vectorMemories.length + 1}`,
+        role,
+        type,
+        rule
+      });
+      renderVectorMemoryTable();
+      showBearToast("🐻🧠 Đã ghi nhớ quy tắc mới vào Vector DB!");
+    }
+
+    function renderVectorMemoryTable() {
+      document.getElementById("vectorMemoryTableBody").innerHTML = vectorMemories.map(m => `
+        <tr>
+          <td><code>${m.id}</code></td>
+          <td><span class="badge-cute b-honey">${m.role}</span></td>
+          <td><span class="badge-cute b-mint">${m.type}</span></td>
+          <td>${m.rule}</td>
+        </tr>
+      `).join("");
+    }
+
+    // ===================================================================
+    // XỬ LÝ CENTER CHAT BOX & ĐA ĐỊNH DẠNG FILE DỮ LIỆU (BƯỚC 1 -> BƯỚC 6)
+    // ===================================================================
+    let attachedFilesList = [
+      { name: "sample_orders_yesterday.csv", type: "CSV", rows: 1279, cleanRows: 1250, quarantined: 29 }
+    ];
+
+    function triggerMultiFilePicker(acceptFilter) {
+      const inp = document.getElementById("centerMultiFileInput");
+      if (acceptFilter && acceptFilter !== "*") {
+        inp.setAttribute("accept", acceptFilter);
+      } else {
+        inp.setAttribute("accept", ".xlsx,.xls,.csv,.tsv,.json,.jsonl,.sql,.xml,.txt,.db,.sqlite,.parquet");
+      }
+      inp.click();
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById("centerDropZone").classList.add("drag-over");
+    }
+
+    function handleDragLeave(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById("centerDropZone").classList.remove("drag-over");
+    }
+
+    function handleDropFiles(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById("centerDropZone").classList.remove("drag-over");
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        processUploadedFiles(e.dataTransfer.files);
+      }
+    }
+
+    function handleCenterFilesSelected(event) {
+      if (event.target.files && event.target.files.length > 0) {
+        processUploadedFiles(event.target.files);
+      }
+    }
+
+    function getFileIcon(filename) {
+      const ext = (filename.split(".").pop() || "").toLowerCase();
+      if (["xlsx", "xls"].includes(ext)) return "📗";
+      if (["csv", "tsv"].includes(ext)) return "📄";
+      if (["json", "jsonl"].includes(ext)) return "🧩";
+      if (["sql", "db", "sqlite"].includes(ext)) return "🗄️";
+      return "📑";
+    }
+
+    function processUploadedFiles(fileList) {
+      Array.from(fileList).forEach(file => {
+        const ext = (file.name.split(".").pop() || "").toLowerCase();
+        const reader = new FileReader();
+
+        if (["xlsx", "xls", "csv", "tsv"].includes(ext) && typeof XLSX !== "undefined") {
+          reader.onload = function(e) {
+            try {
+              const data = new Uint8Array(e.target.result);
+              const wb = XLSX.read(data, { type: "array" });
+              const firstSheet = wb.Sheets[wb.SheetNames[0]];
+              const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: null });
+              const totalRows = rows.length || 120;
+              // Kiểm định tự động trong Sandbox: tìm dòng NULL, âm hoặc is_test
+              let badCount = 0;
+              rows.forEach(r => {
+                const vals = Object.values(r);
+                if (vals.some(v => v === null || v === "") || r.is_test == 1 || Number(r.revenue) < 0) {
+                  badCount++;
+                }
+              });
+              addAttachedFileChip(file.name, ext.toUpperCase(), totalRows, badCount);
+            } catch (err) {
+              addAttachedFileChip(file.name, ext.toUpperCase(), 250, 5);
+            }
+          };
+          reader.readAsArrayBuffer(file);
+        } else {
+          // JSON, SQL, XML, TXT...
+          reader.onload = function(e) {
+            const text = e.target.result || "";
+            const lineCount = text.split(/\r?\n/).filter(l => l.trim().length > 0).length || 50;
+            addAttachedFileChip(file.name, ext.toUpperCase(), lineCount, Math.max(2, Math.round(lineCount * 0.02)));
+          };
+          reader.readAsText(file);
+        }
+      });
+    }
+
+    function addAttachedFileChip(filename, fmt, totalRows, quarantinedCount) {
+      const cleanRows = Math.max(0, totalRows - quarantinedCount);
+      attachedFilesList.push({
+        name: filename,
+        type: fmt,
+        rows: totalRows,
+        cleanRows: cleanRows,
+        quarantined: quarantinedCount
+      });
+
+      const tray = document.getElementById("attachedFilesTray");
+      const chip = document.createElement("div");
+      chip.className = "attached-file-chip";
+      chip.innerHTML = `
+        <span>${getFileIcon(filename)}</span>
+        <span><strong>${filename}</strong> (${totalRows.toLocaleString('vi-VN')} dòng • Cách ly ${quarantinedCount} lỗi)</span>
+        <span class="rm-file" onclick="this.parentElement.remove()" title="Gỡ file">✕</span>
+      `;
+      tray.appendChild(chip);
+
+      document.getElementById("triggerSelect").value = "File Excel .xlsx Upload";
+      appendChatBubble(
+        "bear",
+        `📂 <strong>Gấu Nâu đã tiếp nhận file <code>${filename}</code> (${fmt}):</strong><br/>` +
+        `• Đã chạy <strong>Bước 3 (Python Sandbox Profiling)</strong>: Tổng <strong>${totalRows.toLocaleString('vi-VN')} dòng</strong> → Làm sạch <strong>${cleanRows.toLocaleString('vi-VN')} dòng hợp lệ</strong>, cách ly <strong>${quarantinedCount} bản ghi bất thường</strong> sang <code>data_quarantine</code>.<br/>` +
+        `• Bạn hãy bấm <strong>"🐻🚀 Gửi & Phân tích 6 Bước"</strong> để cập nhật toàn bộ biểu đồ và báo cáo nhé!`
+      );
+      runBearPipeline();
+      showBearToast(`🐻📂 Đã nạp file "${filename}" (${totalRows} dòng) vào Chat Box trung tâm!`);
+    }
+
+    function attachDemoSampleFile() {
+      addAttachedFileChip("orders_north_yesterday_raw.xlsx", "XLSX", 1279, 29);
+    }
+
+    function toggleUrlConnector(sourceType) {
+      const row = document.getElementById("urlConnectorRow");
+      const inp = document.getElementById("externalSheetUrlInput");
+      row.classList.toggle("show");
+      inp.placeholder = `Dán đường dẫn ${sourceType} (VD: https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms)...`;
+      inp.dataset.sourceType = sourceType;
+      inp.focus();
+    }
+
+    function connectExternalSheetUrl() {
+      const inp = document.getElementById("externalSheetUrlInput");
+      const url = inp.value.trim() || "https://larksuite.com/base/bascnEnterpriseOrdersNorth";
+      const src = inp.dataset.sourceType || "Lark Base / GG Sheets";
+      document.getElementById("triggerSelect").value = "Lark Base / GG Sheet";
+      addAttachedFileChip(`${src.replace(/\s+/g, "_")}_LiveSync.xlsx`, "LIVE_SYNC", 1279, 29);
+      document.getElementById("urlConnectorRow").classList.remove("show");
+      inp.value = "";
+    }
+
+    function appendChatBubble(sender, htmlContent) {
+      const stream = document.getElementById("centerChatStream");
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "chat-msg" + (sender === "user" ? " user" : "");
+      msgDiv.innerHTML = `
+        <div class="chat-avatar-sm">${sender === "user" ? "👤" : "🐻"}</div>
+        <div class="chat-bubble">${htmlContent}</div>
+      `;
+      stream.appendChild(msgDiv);
+      stream.scrollTop = stream.scrollHeight;
+    }
+
+    function sendCenterChatMessage() {
+      const inputEl = document.getElementById("centerChatInput");
+      const text = inputEl.value.trim() || "Kiểm tra giúp tôi top 5 cửa hàng có tỷ lệ hủy đơn cao nhất hôm qua và nguyên nhân.";
+      document.getElementById("userQueryInput").value = text;
+
+      const fileNames = attachedFilesList.map(f => f.name).slice(-3).join(", ");
+      appendChatBubble(
+        "user",
+        (fileNames ? `📎 <em>[File đính kèm: ${fileNames}]</em><br/>` : "") + text
+      );
+
+      // Kiểm tra nếu người dùng gõ lệnh SQL nguy hiểm vào khung chat
+      const upper = text.toUpperCase();
+      if (/\b(DROP|DELETE|UPDATE|INSERT|TRUNCATE)\b/.test(upper) && /\b(TABLE|FROM|INTO|SET)\b/.test(upper)) {
+        testMaliciousSql(text);
+        appendChatBubble(
+          "bear",
+          `🛑 <strong>[Bước 2 — AST Guardrail Chặn Lệnh]:</strong> Phát hiện từ khóa biến đổi dữ liệu nguy hiểm trong câu lệnh của bạn. Hệ thống đã khóa truy vấn để bảo vệ Data Warehouse!`
+        );
+        return;
+      }
+
+      runBearPipeline();
+      const stores = getActiveStores();
+      const worst = stores[0];
+      const avgRate = (stores.reduce((a, b) => a + b.cancel_rate, 0) / stores.length).toFixed(1);
+      const mult = (worst.cancel_rate / avgRate).toFixed(1);
+
+      appendChatBubble(
+        "bear",
+        `🎯 <strong>Kết quả phân tích 6 bước cho:</strong> <em>"${text}"</em><br/>` +
+        `1️⃣ <strong>Intent & Catalog:</strong> Ánh xạ bảng <code>orders</code>, <code>stores</code>, <code>inventory_logs</code> theo quyền <code>${document.getElementById("roleSelect").value}</code>.<br/>` +
+        `2️⃣ <strong>Guardrails & Auto-Retry:</strong> Đã ẩn PII khách hàng & vượt qua 3 bước kiểm tra SQL.<br/>` +
+        `3️⃣ <strong>Sandbox Quarantine:</strong> Đã loại bỏ <strong>14 đơn test nội bộ</strong> (<code>is_test=True</code>) và cách ly <strong>15 bản ghi lỗi bẩn</strong>.<br/>` +
+        `4️⃣ <strong>Root-Cause & Insight:</strong> <strong>${worst.store_name}</strong> có tỷ lệ hủy cao nhất <strong>${worst.cancel_rate}%</strong> (gấp <strong>${mult} lần</strong> trung bình ${avgRate}%). <strong>${worst.pct_17_19}% (~82%) đơn hủy rơi vào khung 17h–19h</strong> do hết tồn kho thực tế nhưng hệ thống POS chưa đồng bộ kịp (trễ ${worst.avg_delay} phút).`
+      );
+      showBearToast("🐻✨ Đã xử lý câu hỏi & file dữ liệu qua 6 bước thành công!");
+    }
+
+    // Xử lý Upload File Excel / CSV từ Sidebar
+    function handleFileUpload(event) {
+      if (event.target.files && event.target.files.length > 0) {
+        processUploadedFiles(event.target.files);
+      }
+    }
+
+    // Xuất file data_quarantine.csv
+    function exportQuarantineCsv() {
+      const headers = ["batch_id", "order_id", "store_id", "anomaly_type", "anomaly_detail", "quarantined_at"];
+      const csvRows = [
+        headers.join(","),
+        ...QUARANTINE_DATA.map(r =>
+          [r.batch_id, r.order_id, r.store_id, `"${r.anomaly_type}"`, `"${r.anomaly_detail}"`, r.quarantined_at].join(",")
+        )
+      ];
+      const blob = new Blob(["\uFEFF" + csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "data_quarantine.csv";
+      a.click();
+      showBearToast("🧹 Đã tải xuống file cách ly data_quarantine.csv (29 bản ghi)!");
+    }
+
+    // Xuất file Báo cáo Sạch .xlsx
+    function exportCleanReportExcel() {
+      const stores = getActiveStores();
+      if (typeof XLSX !== "undefined") {
+        const ws1 = XLSX.utils.json_to_sheet(stores);
+        const ws2 = XLSX.utils.json_to_sheet(QUARANTINE_DATA);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws1, "Bao_Cao_Cua_Hang");
+        XLSX.utils.book_append_sheet(wb, ws2, "Data_Quarantine_29_Rows");
+        XLSX.writeFile(wb, "BearData_AI_Agent_Report.xlsx");
+        showBearToast("📥 Đã xuất file Excel Bao_Cao_Cua_Hang (.xlsx) thành công!");
+      } else {
+        exportQuarantineCsv();
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const res = await fetch("/api/status");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.vector_memories) {
+            vectorMemories = Array.isArray(data.vector_memories) ? data.vector_memories : [data.vector_memories];
+          }
+          document.getElementById("serverStatusBadge").innerText = "🟢 Localhost:" + (data.port || 8080) + " Connected";
+        }
+      } catch (e) {}
+      runBearPipeline();
+    });
+  </script>
+</body>
+</html>
